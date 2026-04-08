@@ -1,0 +1,9 @@
+.env
+
+# Base de datos
+*.sql
+*.dump
+*.backup
+postgres_data/
+snomed_data/
+data/backups/
