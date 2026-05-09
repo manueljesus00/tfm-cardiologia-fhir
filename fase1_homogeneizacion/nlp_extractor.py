@@ -2,6 +2,7 @@ import json
 import re
 import os
 import time
+from typing import Optional
 import google.generativeai as genai
 from database.snomed_queries import buscar_concepto_snomed, validar_concepto_snomed
 
@@ -9,9 +10,15 @@ class AgenteExtractorNER:
     """
     Agente experto en Procesamiento de Lenguaje Natural Clínico (PLN).
     Lee informes (TXT o PDF) y extrae las entidades para construir FHIR R4.
+
+    Args:
+        mcp_client: Instancia de MCPSnomedClient. Si se proporciona, todas las
+                    búsquedas SNOMED se enrutan a través del protocolo MCP.
+                    Si es None, llama directamente a la base de datos (modo legacy).
     """
     
-    def __init__(self):
+    def __init__(self, mcp_client=None):
+        self.mcp = mcp_client
         self.model = genai.GenerativeModel('gemini-2.5-flash')
         
         self.system_prompt = """
@@ -37,6 +44,22 @@ class AgenteExtractorNER:
           }
         }
         """
+
+    # ── Enrutamiento MCP / directo ─────────────────────────────────────────
+
+    def _buscar_snomed(self, texto: str, edition: str = "es", limite: int = 5) -> list:
+        """Busca SNOMED via MCP si hay cliente disponible, o directamente si no."""
+        if self.mcp:
+            return self.mcp.buscar_snomed(texto, edition=edition, limite=limite)
+        return buscar_concepto_snomed(texto, limite=limite, edition=edition)
+
+    def _validar_snomed(self, concept_id: str) -> bool:
+        """Valida SNOMED via MCP si hay cliente disponible, o directamente si no."""
+        if self.mcp:
+            return self.mcp.validar_snomed(concept_id)
+        return validar_concepto_snomed(concept_id)
+
+    # ──────────────────────────────────────────────────────────────────────
 
     def seleccionar_concepto_snomed(self, texto_diagnostico, conceptos_candidatos):
         """
@@ -147,11 +170,11 @@ Devuelve ÚNICAMENTE un JSON con esta estructura exacta, sin markdown:
             
             if snomed_id:
                 # Validar que el código existe en la base de datos
-                if not validar_concepto_snomed(snomed_id):
+                if not self._validar_snomed(snomed_id):
                     print(f"  [⚠️] Código SNOMED {snomed_id} no válido. Iniciando búsqueda inteligente...")
                     
                     # Buscar conceptos candidatos usando palabras clave
-                    conceptos_candidatos = buscar_concepto_snomed(texto_diagnostico, limite=10)
+                    conceptos_candidatos = self._buscar_snomed(texto_diagnostico, limite=10)
                     
                     if conceptos_candidatos:
                         print(f"  [🔍] Evaluando {len(conceptos_candidatos)} conceptos candidatos...")

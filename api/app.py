@@ -11,6 +11,9 @@ Endpoints:
     POST /procesar        — Sube un informe (.txt o .pdf) y devuelve FHIR + CIE-10
     GET  /resultado/{id}  — Recupera el resultado por ID de procesamiento
     GET  /health          — Healthcheck
+
+El servidor MCP SNOMED se lanza automáticamente al arrancar FastAPI
+y se cierra al apagarlo. No depende de VS Code.
 """
 import os
 import uuid
@@ -18,11 +21,11 @@ import json
 import tempfile
 from typing import Optional
 from pathlib import Path
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, FileResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 import config  # Carga GOOGLE_API_KEY
@@ -31,6 +34,34 @@ from fase1_homogeneizacion import AgenteExtractorNER, crear_fhir_base
 from fase2_inferencia_cie10 import extraer_contexto_desde_fhir, AgenteCodificadorCardiologia
 from database.snomed_queries import obtener_reglas_mapeo_cie10
 from core.processing_result import ProcessingResult, ConfidenceLevel
+from mcp_client import MCPSnomedClient
+
+
+# ─── Ciclo de vida — MCP sube y baja con FastAPI ─────────────────────────────
+
+# Estado global de la aplicación
+_app_state: dict = {}
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lanza el servidor MCP SNOMED al arrancar FastAPI y lo cierra al apagarse.
+    Usamos MCPSnomedClient (síncrono) porque los agentes son código síncrono.
+    El cliente gestiona su propio thread interno, compatible con asyncio.
+    """
+    print("[FastAPI] Conectando con servidor MCP SNOMED IRBD...")
+    mcp = MCPSnomedClient()
+    mcp.start()
+    try:
+        _app_state["mcp"] = mcp
+        _app_state["agente_ner"] = AgenteExtractorNER(mcp_client=mcp)
+        _app_state["agente_cod"] = AgenteCodificadorCardiologia()
+        print("[FastAPI] Agentes inicializados. API lista.")
+        yield  # La aplicación corre aquí
+    finally:
+        mcp.stop()
+        print("[FastAPI] Servidor MCP SNOMED desconectado.")
 
 
 # ─── Inicialización ──────────────────────────────────────────────────────────
@@ -38,6 +69,7 @@ app = FastAPI(
     title="TFM Cardiología FHIR — API de Codificación Clínica",
     description="Pipeline automatizado de extracción y codificación de informes cardiológicos.",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -54,17 +86,14 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 # Almacén en memoria de resultados (en producción: Redis o base de datos)
 _resultados: dict[str, dict] = {}
 
-# Agentes se instancian una vez (singleton)
-_agente_ner: Optional[AgenteExtractorNER] = None
-_agente_cod: Optional[AgenteCodificadorCardiologia] = None
-
 
 def get_agentes():
-    global _agente_ner, _agente_cod
-    if _agente_ner is None:
-        _agente_ner = AgenteExtractorNER()
-        _agente_cod = AgenteCodificadorCardiologia()
-    return _agente_ner, _agente_cod
+    """Devuelve los agentes inicializados en el lifespan."""
+    agente_ner = _app_state.get("agente_ner")
+    agente_cod = _app_state.get("agente_cod")
+    if not agente_ner or not agente_cod:
+        raise RuntimeError("Los agentes no están inicializados. El servidor MCP puede no estar conectado.")
+    return agente_ner, agente_cod
 
 
 # ─── Modelos de respuesta ────────────────────────────────────────────────────

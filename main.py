@@ -5,6 +5,7 @@ from fase1_homogeneizacion import AgenteExtractorNER, crear_fhir_base
 from fase2_inferencia_cie10 import extraer_contexto_desde_fhir, AgenteCodificadorCardiologia
 from database.snomed_queries import obtener_reglas_mapeo_cie10
 from core.processing_result import ProcessingResult, ConfidenceLevel
+from mcp_client import MCPSnomedClient
 
 def procesar_archivo(ruta_entrada, ruta_fhir_intermedio, agente_ner, agente_codificador):
     """Ejecuta las dos fases del pipeline para un único archivo."""
@@ -86,20 +87,24 @@ def main():
 
     print(f"[ℹ️] Se han detectado {len(archivos)} informe(s) médico(s) en la cola de procesamiento.\n")
 
-    # 3. Instanciamos los agentes UNA SOLA VEZ para optimizar recursos
-    print("Inicializando Agentes de IA...")
-    agente_ner = AgenteExtractorNER()
-    agente_codificador = AgenteCodificadorCardiologia()
+    # 3. Levantamos el servidor MCP SNOMED UNA SOLA VEZ para toda la sesión.
+    #    El servidor corre como subproceso Python y se comunica via stdio MCP.
+    #    Al salir del bloque 'with', el subproceso se cierra limpiamente.
+    print("Iniciando servidor MCP SNOMED IRBD...")
+    with MCPSnomedClient() as mcp:
 
-    # 4. Procesamos cada archivo en bucle
-    for nombre_archivo in archivos:
-        ruta_entrada = os.path.join(input_dir, nombre_archivo)
-        
-        # Generamos el nombre de salida dinámicamente (ej. juan_perez_fhir.json)
-        nombre_base = os.path.splitext(nombre_archivo)[0]
-        ruta_fhir_intermedio = os.path.join(output_dir, f"{nombre_base}_fhir.json")
+        # 4. Instanciamos los agentes inyectando el cliente MCP
+        print("Inicializando Agentes de IA...")
+        agente_ner = AgenteExtractorNER(mcp_client=mcp)
+        agente_codificador = AgenteCodificadorCardiologia()
 
-        procesar_archivo(ruta_entrada, ruta_fhir_intermedio, agente_ner, agente_codificador)
+        # 5. Procesamos cada archivo en bucle
+        for nombre_archivo in archivos:
+            ruta_entrada = os.path.join(input_dir, nombre_archivo)
+            nombre_base = os.path.splitext(nombre_archivo)[0]
+            ruta_fhir_intermedio = os.path.join(output_dir, f"{nombre_base}_fhir.json")
+
+            procesar_archivo(ruta_entrada, ruta_fhir_intermedio, agente_ner, agente_codificador)
 
     print("\n" + "="*60)
     print("[🎉] PROCESAMIENTO POR LOTES FINALIZADO CON ÉXITO")
