@@ -3,6 +3,7 @@ import re
 import os
 import time
 import google.generativeai as genai
+from database.snomed_queries import buscar_concepto_snomed, validar_concepto_snomed
 
 class AgenteExtractorNER:
     """
@@ -36,6 +37,70 @@ class AgenteExtractorNER:
           }
         }
         """
+
+    def seleccionar_concepto_snomed(self, texto_diagnostico, conceptos_candidatos):
+        """
+        Usa el LLM para evaluar múltiples conceptos SNOMED candidatos
+        y seleccionar el más apropiado para el diagnóstico dado.
+        """
+        if not conceptos_candidatos:
+            return None
+        
+        # Si solo hay un candidato, lo devolvemos directamente
+        if len(conceptos_candidatos) == 1:
+            return conceptos_candidatos[0]
+        
+        # Construir prompt para el agente selector
+        candidatos_texto = "\n".join([
+            f"{i+1}. ID: {c['concept_id']} - {c['description']}" 
+            for i, c in enumerate(conceptos_candidatos)
+        ])
+        
+        prompt_selector = f"""
+Eres un experto en terminología médica SNOMED CT.
+
+DIAGNÓSTICO ORIGINAL: "{texto_diagnostico}"
+
+CONCEPTOS SNOMED CANDIDATOS:
+{candidatos_texto}
+
+TAREA:
+Selecciona el concepto SNOMED que mejor represente el diagnóstico original.
+Considera:
+- Similitud semántica y clínica
+- Especificidad apropiada
+- Equivalencia de significado
+
+Devuelve ÚNICAMENTE un JSON con esta estructura exacta, sin markdown:
+{{
+  "selected_id": "<ID del concepto seleccionado>",
+  "confidence": <número entre 0 y 1>,
+  "reasoning": "<breve explicación de por qué es el más apropiado>"
+}}
+"""
+        
+        try:
+            response = self.model.generate_content(prompt_selector)
+            texto_limpio = re.sub(r'```json|```', '', response.text).strip()
+            seleccion = json.loads(texto_limpio)
+            
+            # Buscar el concepto seleccionado en la lista
+            selected_id = seleccion.get('selected_id')
+            for concepto in conceptos_candidatos:
+                if concepto['concept_id'] == selected_id:
+                    print(f"  [🎯] Concepto seleccionado: {concepto['description']}")
+                    print(f"  [📊] Confianza: {seleccion.get('confidence', 0):.2f}")
+                    print(f"  [💭] Razonamiento: {seleccion.get('reasoning', 'N/A')}")
+                    return concepto
+            
+            # Si no se encontró, devolver el primero como fallback
+            print(f"  [⚠️] ID seleccionado no encontrado, usando primer candidato")
+            return conceptos_candidatos[0]
+            
+        except Exception as e:
+            print(f"  [⚠️] Error en agente selector: {e}")
+            # Fallback: devolver el primer candidato
+            return conceptos_candidatos[0]
 
     def extraer_entidades(self, ruta_archivo):
         print(f"[🧠] Agente Extractor analizando el informe: {os.path.basename(ruta_archivo)}")
@@ -75,6 +140,41 @@ class AgenteExtractorNER:
             response = self.model.generate_content(contenido_a_enviar)
             texto_limpio = re.sub(r'```json|```', '', response.text).strip()
             datos = json.loads(texto_limpio)
+            
+            # 4. Validamos y corregimos el código SNOMED CT
+            snomed_id = datos.get('diagnostico', {}).get('snomed_id')
+            texto_diagnostico = datos.get('diagnostico', {}).get('texto', '')
+            
+            if snomed_id:
+                # Validar que el código existe en la base de datos
+                if not validar_concepto_snomed(snomed_id):
+                    print(f"  [⚠️] Código SNOMED {snomed_id} no válido. Iniciando búsqueda inteligente...")
+                    
+                    # Buscar conceptos candidatos usando palabras clave
+                    conceptos_candidatos = buscar_concepto_snomed(texto_diagnostico, limite=10)
+                    
+                    if conceptos_candidatos:
+                        print(f"  [🔍] Evaluando {len(conceptos_candidatos)} conceptos candidatos...")
+                        
+                        # Usar el agente selector para elegir el mejor concepto
+                        concepto_seleccionado = self.seleccionar_concepto_snomed(
+                            texto_diagnostico, 
+                            conceptos_candidatos
+                        )
+                        
+                        if concepto_seleccionado:
+                            datos['diagnostico']['snomed_id'] = concepto_seleccionado['concept_id']
+                            datos['diagnostico']['snomed_description'] = concepto_seleccionado['description']
+                            print(f"  [✅] Código corregido: {concepto_seleccionado['concept_id']}")
+                        else:
+                            print(f"  [❌] No se pudo seleccionar un concepto válido")
+                            datos['diagnostico']['snomed_id'] = None
+                    else:
+                        print(f"  [❌] No se encontraron conceptos SNOMED para: {texto_diagnostico}")
+                        datos['diagnostico']['snomed_id'] = None
+                else:
+                    print(f"  [✅] Código SNOMED {snomed_id} validado correctamente")
+            
             return datos
             
         except json.JSONDecodeError:
@@ -82,4 +182,6 @@ class AgenteExtractorNER:
             return None
         except Exception as e:
             print(f"[!] Error de conexión o procesamiento en Fase 1: {e}")
+            import traceback
+            traceback.print_exc()
             return None

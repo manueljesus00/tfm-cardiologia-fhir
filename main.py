@@ -4,6 +4,7 @@ import config
 from fase1_homogeneizacion import AgenteExtractorNER, crear_fhir_base
 from fase2_inferencia_cie10 import extraer_contexto_desde_fhir, AgenteCodificadorCardiologia
 from database.snomed_queries import obtener_reglas_mapeo_cie10
+from core.processing_result import ProcessingResult, ConfidenceLevel
 
 def procesar_archivo(ruta_entrada, ruta_fhir_intermedio, agente_ner, agente_codificador):
     """Ejecuta las dos fases del pipeline para un único archivo."""
@@ -19,14 +20,22 @@ def procesar_archivo(ruta_entrada, ruta_fhir_intermedio, agente_ner, agente_codi
     datos_extraidos = agente_ner.extraer_entidades(ruta_entrada)
     
     if not datos_extraidos:
-        print(f"[!] Omitiendo {os.path.basename(ruta_entrada)} por fallo en Fase 1.")
+        print(f"[!] Omitiendo {os.path.basename(ruta_entrada)} por fallo total en Fase 1 (LLM no respondió).")
         return
 
-    print(f"[*] Diagnóstico extraído: {datos_extraidos.get('diagnostico', {}).get('texto')}")
-    print(f"[*] Código SNOMED CT: {datos_extraidos.get('diagnostico', {}).get('snomed_id')}")
-    
-    # Construimos y guardamos el FHIR
-    bundle_fhir = crear_fhir_base(datos_extraidos)
+    # --- GRACEFUL DEGRADATION: evaluar calidad de la extracción ---
+    result = ProcessingResult.from_llm_output(datos_extraidos)
+    result.log_warnings()
+    print(f"[*] Diagnóstico extraído: {result.diagnostico_texto}")
+    print(f"[*] Código SNOMED CT: {result.snomed_id or 'No resuelto'}")
+    print(f"[*] Nivel de confianza: {result.confidence_level.value.upper()}")
+
+    if not result.can_proceed_phase2:
+        print(f"[!] Confianza insuficiente (MINIMAL). No se puede generar un registro FHIR útil.")
+        return
+
+    # Construimos FHIR con los datos disponibles (completos o parciales)
+    bundle_fhir = crear_fhir_base(result.to_fhir_dict())
     with open(ruta_fhir_intermedio, 'w', encoding='utf-8') as f:
         f.write(bundle_fhir.json(indent=2))
         
@@ -40,16 +49,20 @@ def procesar_archivo(ruta_entrada, ruta_fhir_intermedio, agente_ner, agente_codi
     contexto_fhir = extraer_contexto_desde_fhir(ruta_fhir_intermedio)
     snomed_id = contexto_fhir.get('snomed_id')
     
-    if not snomed_id:
-        print(f"[!] No se encontró un SNOMED ID válido en el registro FHIR para este paciente.")
-        return
+    reglas_bbdd = obtener_reglas_mapeo_cie10(snomed_id) if snomed_id and snomed_id != '0' else []
 
-    reglas_bbdd = obtener_reglas_mapeo_cie10(snomed_id)
     if not reglas_bbdd:
-        print(f"[!] No se encontraron reglas de la OMS en BBDD para el concepto {snomed_id}.")
-        return
-
-    resultado_cie10 = agente_codificador.procesar_historial(contexto_fhir['resumen_razonamiento'], reglas_bbdd)
+        if result.confidence_level == ConfidenceLevel.LOW:
+            # Modo degradado: inferencia directa desde texto sin reglas SNOMED formales
+            print(f"[⚠️  DEGRADED] Sin reglas SNOMED. Inferencia directa por texto diagnóstico.")
+            resultado_cie10 = agente_codificador.procesar_historial(
+                contexto_fhir['resumen_razonamiento'], reglas_bbdd=[]
+            )
+        else:
+            print(f"[!] No se encontraron reglas de la OMS en BBDD para el concepto {snomed_id}.")
+            return
+    else:
+        resultado_cie10 = agente_codificador.procesar_historial(contexto_fhir['resumen_razonamiento'], reglas_bbdd)
     
     print(f"\n[✅] DICTAMEN FINAL PARA {os.path.basename(ruta_entrada)}:")
     print(json.dumps(resultado_cie10, indent=2, ensure_ascii=False))

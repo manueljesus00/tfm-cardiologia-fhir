@@ -1,5 +1,16 @@
 .env
 
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+venv/
+.venv/
+
 # Base de datos
 *.sql
 *.dump
@@ -7,3 +18,14 @@
 postgres_data/
 snomed_data/
 data/backups/
+
+# Datos clínicos (no subir al repo — privacidad del paciente)
+data/input_informes/
+data/output_fhir/
+
+# Benchmark reports
+benchmark_report.csv
+validation_report.json
+
+# VS Code workspace
+*.code-workspace
