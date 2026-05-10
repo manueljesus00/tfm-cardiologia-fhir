@@ -11,3 +11,6 @@ pydantic>=2.0.0
 fastapi>=0.111.0
 uvicorn[standard]>=0.29.0
 python-multipart>=0.0.9
+# Benchmark multi-modelo
+openai>=1.30.0          # OpenAI GPT-4o + adaptador para Ollama (API compatible)
+anthropic>=0.25.0       # Claude 3.x

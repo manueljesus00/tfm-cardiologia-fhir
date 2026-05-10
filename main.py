@@ -4,6 +4,7 @@ import config
 from fase1_homogeneizacion import AgenteExtractorNER, crear_fhir_base
 from fase2_inferencia_cie10 import extraer_contexto_desde_fhir, AgenteCodificadorCardiologia
 from database.snomed_queries import obtener_reglas_mapeo_cie10
+from database.patient_repository import persistir_resultado_clinico, ejecutar_migracion
 from core.processing_result import ProcessingResult, ConfidenceLevel
 from mcp_client import MCPSnomedClient
 
@@ -35,12 +36,20 @@ def procesar_archivo(ruta_entrada, ruta_fhir_intermedio, agente_ner, agente_codi
         print(f"[!] Confianza insuficiente (MINIMAL). No se puede generar un registro FHIR útil.")
         return
 
-    # Construimos FHIR con los datos disponibles (completos o parciales)
-    bundle_fhir = crear_fhir_base(result.to_fhir_dict())
+    # Guardamos y persistimos el FHIR con la lista completa de diagnósticos
+    fhir_dict = result.to_fhir_dict()
+    bundle_fhir = crear_fhir_base(fhir_dict)
+    bundle_json = json.loads(bundle_fhir.json(indent=2))
+
     with open(ruta_fhir_intermedio, 'w', encoding='utf-8') as f:
-        f.write(bundle_fhir.json(indent=2))
-        
+        json.dump(bundle_json, f, indent=2, ensure_ascii=False)
+
     print(f"[✅] Registro FHIR R4 guardado en: {ruta_fhir_intermedio}")
+    n_diags = len(fhir_dict.get('diagnosticos', []))
+    print(f"[ℹ️] Diagnósticos extraídos: {n_diags} "
+          f"({sum(1 for d in fhir_dict['diagnosticos'] if d['tipo']=='PRINCIPAL')} principal, "
+          f"{sum(1 for d in fhir_dict['diagnosticos'] if d['tipo']=='SECUNDARIO')} secundarios, "
+          f"{sum(1 for d in fhir_dict['diagnosticos'] if d['tipo']=='ANTECEDENTE')} antecedentes)")
 
     # ==========================================================
     # FASE 2: INFERENCIA CIE-10 (FHIR R4 -> CIE-10-ES)
@@ -64,21 +73,44 @@ def procesar_archivo(ruta_entrada, ruta_fhir_intermedio, agente_ner, agente_codi
             return
     else:
         resultado_cie10 = agente_codificador.procesar_historial(contexto_fhir['resumen_razonamiento'], reglas_bbdd)
-    
+
     print(f"\n[✅] DICTAMEN FINAL PARA {os.path.basename(ruta_entrada)}:")
     print(json.dumps(resultado_cie10, indent=2, ensure_ascii=False))
 
+    # Enriquecer diagnósticos con los códigos CIE-10 inferidos antes de persistir
+    diagnosticos_con_cie10 = fhir_dict.get('diagnosticos', [])
+    principal_idx = next((i for i, d in enumerate(diagnosticos_con_cie10) if d.get('tipo') == 'PRINCIPAL'), None)
+    if principal_idx is not None and resultado_cie10:
+        primer_resultado = next(iter(resultado_cie10.values()), {})
+        diagnosticos_con_cie10[principal_idx]['cie10_codigo'] = primer_resultado.get('selected_code')
+        diagnosticos_con_cie10[principal_idx]['cie10_confidence'] = primer_resultado.get('confidence_score')
+        diagnosticos_con_cie10[principal_idx]['cie10_razonamiento'] = primer_resultado.get('clinical_reasoning')
+
+    # Persistir en la base de datos clínica normalizada
+    ids = persistir_resultado_clinico(
+        datos_paciente=fhir_dict['paciente'],
+        nombre_archivo=os.path.basename(ruta_entrada),
+        confidence_level=result.confidence_level.value,
+        fhir_bundle=bundle_json,
+        diagnosticos=diagnosticos_con_cie10,
+    )
+    print(f"[💾] Persistido → paciente_id: {ids['paciente_id']} | informe_id: {ids['informe_id']}")
+
 
 def main():
-    # 1. Definimos y creamos los directorios si no existen
+    # 1. Aplicar migración DB clínica (idempotente — IF NOT EXISTS)
+    print("Aplicando migración de esquema clínico...")
+    ejecutar_migracion()
+
+    # 2. Definimos y creamos los directorios si no existen
     input_dir = os.path.join("data", "input_informes")
     output_dir = os.path.join("data", "output_fhir")
     
     os.makedirs(input_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=True)
 
-    # 2. Obtenemos la lista de todos los archivos válidos en la carpeta
-    archivos = [f for f in os.listdir(input_dir) if f.lower().endswith(('.txt', '.pdf'))]
+    # 2. Definimos y creamos los directorios si no existen
+    # 3. Obtenemos la lista de todos los archivos válidos en la carpeta
 
     if not archivos:
         print(f"[!] La carpeta '{input_dir}' está vacía.")

@@ -18,12 +18,13 @@ y se cierra al apagarlo. No depende de VS Code.
 import os
 import uuid
 import json
+import time as _time
 import tempfile
 from typing import Optional
 from pathlib import Path
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, UploadFile, File, HTTPException, BackgroundTasks
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -106,23 +107,117 @@ class ProcesarResponse(BaseModel):
 
 class ResultadoResponse(BaseModel):
     job_id: str
+    estado: str
     archivo: str
     confidence_level: str
     snomed_id: Optional[str]
     diagnostico: Optional[str]
     cie10: dict
     fhir_bundle: dict
+    telemetria: Optional[dict] = None
+
+
+# ─── Catálogo de modelos disponibles ─────────────────────────────────────────
+
+MODELOS_DISPONIBLES = [
+    {
+        "id":          "gemini-2.5-flash",
+        "name":        "Gemini 2.5 Flash",
+        "provider":    "google",
+        "type":        "cloud",
+        "description": "Modelo principal del TFM. Rápido, económico y con Function Calling nativo.",
+    },
+    {
+        "id":          "groq/llama-3.1-8b-instant",
+        "name":        "Llama 3.1 8B Instant",
+        "provider":    "groq",
+        "type":        "cloud",
+        "description": "Open source via Groq (gratuito). ~500 tok/s. Requiere GROQ_API_KEY.",
+    },
+    {
+        "id":          "groq/llama-3.3-70b-versatile",
+        "name":        "Llama 3.3 70B",
+        "provider":    "groq",
+        "type":        "cloud",
+        "description": "Open source via Groq (gratuito). Mayor calidad. Requiere GROQ_API_KEY.",
+    },
+    {
+        "id":          "ollama/phi4-mini",
+        "name":        "Phi-4 Mini",
+        "provider":    "microsoft",
+        "type":        "local",
+        "description": "Local via Ollama. ~4 GB RAM. Sin internet. Requiere Ollama instalado.",
+    },
+    {
+        "id":          "ollama/llama3.2:3b",
+        "name":        "Llama 3.2 3B",
+        "provider":    "meta",
+        "type":        "local",
+        "description": "Local via Ollama. ~3 GB RAM. Muy rápido en CPU.",
+    },
+]
+
+
+def _build_provider_for_modelo(modelo_id: str):
+    """
+    Construye un ModelProvider a partir del ID usado en el frontend.
+    Formato: "gemini-2.5-flash" | "groq/<model>" | "ollama/<model>"
+    """
+    from benchmark.providers import GeminiProvider, GroqProvider, OllamaProvider
+    if modelo_id.startswith("groq/"):
+        return GroqProvider(model_id=modelo_id[5:])
+    if modelo_id.startswith("ollama/"):
+        return OllamaProvider(model_id=modelo_id[7:])
+    # Default: Gemini (model_id es directamente el nombre del modelo)
+    return GeminiProvider(model_id=modelo_id)
 
 
 # ─── Lógica de procesamiento ─────────────────────────────────────────────────
 
-def _procesar_en_background(job_id: str, ruta_tmp: str, extension: str):
+def _normalizar_cie10(cie10_raw: dict) -> dict:
+    """
+    Convierte la estructura interna de los motores CIE-10 al formato
+    esperado por el frontend (campos snake_case en español).
+    Cubre tanto rule_engine.py como rule_engine_agentic.py.
+    """
+    normalizado = {}
+    for grupo_id, regla in cie10_raw.items():
+        normalizado[str(grupo_id)] = {
+            "map_group":          regla.get("map_group", grupo_id),
+            "map_priority":       regla.get("map_priority", 1),
+            "map_rule":           regla.get("map_rule", "TRUE"),
+            "map_target":         regla.get("selected_code") or regla.get("map_target", ""),
+            "cumple_regla":       regla.get("rule_evaluation", True),
+            "razonamiento":       regla.get("clinical_reasoning") or regla.get("razonamiento", ""),
+            "informacion_faltante": regla.get("missing_information") or regla.get("informacion_faltante"),
+        }
+    return normalizado
+
+def _procesar_en_background(job_id: str, ruta_tmp: str, extension: str, modelo_id: str = "gemini-2.5-flash"):
     """Tarea de fondo: ejecuta el pipeline completo y almacena el resultado."""
+    from benchmark.runner import _TrackingProvider
+    from benchmark.pricing import calcular_coste_eur
+    from fase2_inferencia_cie10.rule_engine import AgenteCodificadorCardiologia as CodLegacy
+
     _resultados[job_id]["estado"] = "procesando"
-    agente_ner, agente_cod = get_agentes()
 
     try:
+        # Construir provider e instrumentar con trackers de tokens
+        provider   = _build_provider_for_modelo(modelo_id)
+        tracker_f1 = _TrackingProvider(provider)
+        tracker_f2 = _TrackingProvider(provider)
+
+        # Instancias frescas por petición (no compartir estado entre requests)
+        agente_ner = AgenteExtractorNER(mcp_client=_app_state.get("mcp"))
+        agente_ner.model = tracker_f1
+        agente_cod = CodLegacy()
+        agente_cod.model = tracker_f2
+
+        # ── Fase 1 ───────────────────────────────────────────────────────────
+        t0_f1 = _time.perf_counter()
         datos = agente_ner.extraer_entidades(ruta_tmp)
+        t_f1  = round(_time.perf_counter() - t0_f1, 3)
+
         if not datos:
             _resultados[job_id].update({"estado": "error", "error": "Fase 1 falló (LLM no respondió)"})
             return
@@ -138,18 +233,37 @@ def _procesar_en_background(job_id: str, ruta_tmp: str, extension: str):
         with open(ruta_fhir, 'w', encoding='utf-8') as f:
             json.dump(bundle_json, f, indent=2, ensure_ascii=False)
 
-        contexto = extraer_contexto_desde_fhir(str(ruta_fhir))
+        # ── Fase 2 ───────────────────────────────────────────────────────────
+        t0_f2 = _time.perf_counter()
+        contexto  = extraer_contexto_desde_fhir(str(ruta_fhir))
         snomed_id = contexto.get('snomed_id')
-        reglas = obtener_reglas_mapeo_cie10(snomed_id) if snomed_id and snomed_id != '0' else []
-        cie10 = agente_cod.procesar_historial(contexto['resumen_razonamiento'], reglas)
+        reglas    = obtener_reglas_mapeo_cie10(snomed_id) if snomed_id and snomed_id != '0' else []
+        cie10     = agente_cod.procesar_historial(contexto['resumen_razonamiento'], reglas)
+        t_f2      = round(_time.perf_counter() - t0_f2, 3)
+
+        # ── Telemetría ────────────────────────────────────────────────────────
+        total_prompt     = tracker_f1.prompt_tokens     + tracker_f2.prompt_tokens
+        total_completion = tracker_f1.completion_tokens + tracker_f2.completion_tokens
+        telemetria = {
+            "modelo":         provider.name,
+            "provider":       provider.provider,
+            "tokens_fase1":   tracker_f1.total_tokens,
+            "tokens_fase2":   tracker_f2.total_tokens,
+            "tokens_total":   tracker_f1.total_tokens + tracker_f2.total_tokens,
+            "tiempo_fase1_s": t_f1,
+            "tiempo_fase2_s": t_f2,
+            "tiempo_total_s": round(t_f1 + t_f2, 3),
+            "coste_eur":      calcular_coste_eur(provider.model_id, total_prompt, total_completion),
+        }
 
         _resultados[job_id].update({
-            "estado": "completado",
+            "estado":           "completado",
             "confidence_level": result.confidence_level.value,
-            "snomed_id": result.snomed_id,
-            "diagnostico": result.diagnostico_texto,
-            "cie10": cie10,
-            "fhir_bundle": bundle_json,
+            "snomed_id":        result.snomed_id,
+            "diagnostico":      result.diagnostico_texto,
+            "cie10":            _normalizar_cie10(cie10),
+            "fhir_bundle":      bundle_json,
+            "telemetria":       telemetria,
         })
 
     except Exception as e:
@@ -166,13 +280,21 @@ def health():
     return {"status": "ok", "version": "1.0.0"}
 
 
+@app.get("/modelos")
+def listar_modelos():
+    """Devuelve el catálogo de modelos disponibles para el frontend."""
+    return {"modelos": MODELOS_DISPONIBLES}
+
+
 @app.post("/procesar", response_model=ProcesarResponse)
 async def procesar_informe(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
+    modelo: str = Form("gemini-2.5-flash"),
 ):
     """
     Sube un informe médico (.txt o .pdf) y lo procesa de forma asíncrona.
+    Acepta el parámetro `modelo` para elegir el LLM (gemini-2.5-flash, groq/llama-3.1-8b-instant, ollama/phi4-mini…).
     Devuelve un job_id para consultar el resultado con GET /resultado/{job_id}.
     """
     extension = Path(file.filename).suffix.lower()
@@ -181,18 +303,17 @@ async def procesar_informe(
 
     job_id = str(uuid.uuid4())
 
-    # Guardar archivo temporal con extensión correcta para que el NER lo identifique
     with tempfile.NamedTemporaryFile(delete=False, suffix=extension) as tmp:
         tmp.write(await file.read())
         ruta_tmp = tmp.name
 
-    _resultados[job_id] = {"estado": "encolado", "archivo": file.filename}
-    background_tasks.add_task(_procesar_en_background, job_id, ruta_tmp, extension)
+    _resultados[job_id] = {"estado": "encolado", "archivo": file.filename, "modelo": modelo}
+    background_tasks.add_task(_procesar_en_background, job_id, ruta_tmp, extension, modelo)
 
     return ProcesarResponse(
         job_id=job_id,
         estado="encolado",
-        mensaje=f"Informe en procesamiento. Consulta el resultado en /resultado/{job_id}",
+        mensaje=f"Informe en procesamiento con {modelo}. Consulta el resultado en /resultado/{job_id}",
     )
 
 
@@ -210,7 +331,75 @@ def obtener_resultado(job_id: str):
     if data["estado"] == "error":
         raise HTTPException(500, detail={"job_id": job_id, "error": data.get("error")})
 
-    return ResultadoResponse(job_id=job_id, **{k: v for k, v in data.items() if k != "estado"})
+    return ResultadoResponse(job_id=job_id, estado="completado", **{k: v for k, v in data.items() if k not in ("estado", "modelo")})
+
+
+# ─── Benchmark endpoint ───────────────────────────────────────────────────────
+
+# Métricas acumuladas de sesión (se complementan con datos del CSV si existe)
+_benchmark_log: list[dict] = []
+
+
+def _registrar_benchmark(job_id: str, tiempo_total: float):
+    """Añade métricas al log de benchmarks tras cada procesamiento completado."""
+    data = _resultados.get(job_id, {})
+    if data.get("estado") != "completado":
+        return
+    _benchmark_log.append({
+        "modelo": "Gemini 2.5 Flash",
+        "archivo": data.get("archivo", ""),
+        "timestamp": __import__("datetime").datetime.now().isoformat(),
+        "tiempo_fase1_s": round(tiempo_total * 0.4, 2),   # Estimado proporcional
+        "tiempo_fase2_s": round(tiempo_total * 0.6, 2),
+        "tiempo_total_s": round(tiempo_total, 2),
+        "tokens_fase1_total": 0,  # Requiere instrumentación adicional del agente
+        "tokens_fase2_total": 0,
+        "tokens_totales": 0,
+        "confidence_level": data.get("confidence_level", ""),
+        "cie10_codes": ",".join(
+            v.get("map_target", "") for v in data.get("cie10", {}).values()
+            if isinstance(v, dict) and v.get("cumple_regla")
+        ),
+        "exito": True,
+        "coste_estimado_eur": 0.0,
+    })
+
+
+@app.get("/benchmarks")
+def obtener_benchmarks():
+    """
+    Devuelve métricas históricas de procesamiento para el dashboard del portal.
+    Lee primero el CSV generado por benchmark.py si existe; añade los de sesión.
+    """
+    import csv
+    from pathlib import Path as _Path
+
+    metricas: list[dict] = []
+
+    # Intentar leer CSV histórico generado por benchmark.py
+    csv_path = _Path("data/benchmark_report.csv")
+    if csv_path.exists():
+        with open(csv_path, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                metricas.append({
+                    "modelo": row.get("modelo", "Gemini 2.5 Flash"),
+                    "archivo": row.get("archivo", ""),
+                    "timestamp": row.get("timestamp", ""),
+                    "tiempo_fase1_s": float(row.get("tiempo_fase1_s", 0)),
+                    "tiempo_fase2_s": float(row.get("tiempo_fase2_s", 0)),
+                    "tiempo_total_s": float(row.get("tiempo_total_s", 0)),
+                    "tokens_fase1_total": int(row.get("tokens_fase1_total", 0)),
+                    "tokens_fase2_total": int(row.get("tokens_fase2_total", 0)),
+                    "tokens_totales": int(row.get("tokens_totales", 0)),
+                    "confidence_level": row.get("confidence_level", ""),
+                    "cie10_codes": row.get("cie10_codes", ""),
+                    "exito": row.get("exito", "True").lower() == "true",
+                    "coste_estimado_eur": float(row.get("coste_estimado_eur", 0)),
+                })
+
+    metricas.extend(_benchmark_log)
+    return metricas
 
 
 # ─── Opcional: servir UI estática ────────────────────────────────────────────

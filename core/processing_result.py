@@ -40,21 +40,31 @@ class ProcessingResult:
     @classmethod
     def from_llm_output(cls, datos: dict) -> "ProcessingResult":
         """
-        Construye un ProcessingResult desde el JSON del LLM,
-        calculando automáticamente el nivel de confianza.
+        Construye un ProcessingResult desde el JSON del LLM (nuevo schema multi-diagnóstico).
+        Soporta también el schema legacy con clave 'diagnostico' (singular).
         """
         paciente = datos.get("paciente", {})
-        diagnostico = datos.get("diagnostico", {})
+        diagnosticos = datos.get("diagnosticos", [])
+
+        # Compatibilidad con schema legacy (clave 'diagnostico' singular)
+        if not diagnosticos and "diagnostico" in datos:
+            d = datos["diagnostico"]
+            diagnosticos = [{"tipo": "PRINCIPAL", "orden": 1,
+                             "texto": d.get("texto"), "snomed_id": d.get("snomed_id")}]
+
+        # Diagnóstico principal = primer PRINCIPAL encontrado
+        principal = next((d for d in diagnosticos if d.get("tipo") == "PRINCIPAL"), None)
 
         result = cls(
             nombre=paciente.get("nombre") if paciente.get("nombre") not in (None, "Desconocido", "") else None,
             apellidos=paciente.get("apellidos") if paciente.get("apellidos") not in (None, "Desconocido", "") else None,
             genero=paciente.get("genero", "unknown"),
             fecha_nacimiento=paciente.get("fecha_nacimiento") if paciente.get("fecha_nacimiento") not in (None, "Desconocido", "") else None,
-            diagnostico_texto=diagnostico.get("texto"),
-            snomed_id=diagnostico.get("snomed_id"),
+            diagnostico_texto=principal.get("texto") if principal else None,
+            snomed_id=str(principal.get("snomed_id")) if principal and principal.get("snomed_id") else None,
         )
-
+        result._diagnosticos_completos = diagnosticos  # lista completa para FHIR y DB
+        result._datos_paciente_completos = paciente     # incluye identificadores
         result._calcular_confianza()
         return result
 
@@ -85,18 +95,24 @@ class ProcessingResult:
         self.can_proceed_phase2 = tiene_diagnostico
 
     def to_fhir_dict(self) -> dict:
-        """Convierte a un dict compatible con crear_fhir_base(), con defaults seguros."""
+        """Convierte al dict esperado por crear_fhir_base() (schema con 'diagnosticos')."""
+        diagnosticos = getattr(self, '_diagnosticos_completos', [])
+        paciente_completo = getattr(self, '_datos_paciente_completos', {})
+        if not diagnosticos:
+            diagnosticos = [{
+                "tipo": "PRINCIPAL", "orden": 1,
+                "texto": self.diagnostico_texto or "Diagnóstico no especificado",
+                "snomed_id": self.snomed_id,
+            }]
         return {
             "paciente": {
                 "nombre": self.nombre or "Anónimo",
                 "apellidos": self.apellidos or "Desconocido",
                 "genero": self.genero,
                 "fecha_nacimiento": self.fecha_nacimiento,
+                "identificadores": paciente_completo.get("identificadores", {}),
             },
-            "diagnostico": {
-                "texto": self.diagnostico_texto or "Diagnóstico no especificado",
-                "snomed_id": self.snomed_id or "0",  # '0' como placeholder semántico
-            }
+            "diagnosticos": diagnosticos,
         }
 
     def log_warnings(self):

@@ -15,5 +15,19 @@ services:
       - snomed_data:/var/lib/postgresql/data
       - ./data/init_db:/docker-entrypoint-initdb.d
 
+  # ── Ollama: modelos locales (LLaMA, Mistral, Phi, DeepSeek…) ────────────────
+  # Levantarlo:  docker compose up ollama -d
+  # Descargar modelo: docker exec -it ollama ollama pull llama3.2
+  # Modelos recomendados para el TFM (ajustar según VRAM disponible):
+  #   - llama3.2         →  ~4 GB VRAM  (recomendado para equipos con GPU modesta)
+  #   - mistral          →  ~8 GB VRAM
+  #   - phi4-mini        →  ~4 GB VRAM  (muy eficiente)
+  #   - deepseek-r1:7b   →  ~8 GB VRAM
+  # ── Ollama: modelos locales ───────────────────────────────────────────────────
+  # Ollama corre como servicio nativo en Windows (ollama.com/download/windows).
+  # No se gestiona via Docker para evitar problemas de red en WSL2.
+  # Instalar: descarga el .exe e instálalo. Queda en http://localhost:11434
+  # Descargar modelo: ollama pull phi4-mini
+
 volumes:
   snomed_data:

@@ -1,0 +1,139 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-primary: #0a0f1e;
+    --bg-secondary: #0f172a;
+    --bg-card: #1e293b;
+    --border: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --accent: #3b82f6;
+    --accent-glow: rgba(59, 130, 246, 0.2);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: "Inter", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+  }
+}
+
+@layer components {
+  /* ── Card / Panel ── */
+  .card {
+    @apply rounded-xl border border-surface-700 bg-surface-800 p-6;
+  }
+
+  .card-sm {
+    @apply rounded-lg border border-surface-700 bg-surface-800 p-4;
+  }
+
+  /* ── Buttons ── */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-sm font-medium text-white
+           transition-all hover:bg-brand-500 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 rounded-lg border border-surface-600 bg-surface-700 px-5 py-2.5
+           text-sm font-medium text-slate-200 transition-all hover:bg-surface-600 active:scale-95;
+  }
+
+  /* ── Badges ── */
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .badge-blue   { @apply badge bg-brand-900 text-brand-300 ring-1 ring-brand-700; }
+  .badge-green  { @apply badge bg-emerald-900/60 text-emerald-300 ring-1 ring-emerald-700; }
+  .badge-yellow { @apply badge bg-amber-900/60 text-amber-300 ring-1 ring-amber-700; }
+  .badge-red    { @apply badge bg-red-900/60 text-red-300 ring-1 ring-red-700; }
+  .badge-gray   { @apply badge bg-surface-700 text-slate-400 ring-1 ring-surface-600; }
+
+  /* ── Section wrapper ── */
+  .section {
+    @apply mx-auto max-w-7xl px-6 py-16;
+  }
+
+  /* ── Heading accent ── */
+  .heading-accent {
+    @apply bg-gradient-to-r from-brand-400 to-brand-200 bg-clip-text text-transparent;
+  }
+
+  /* ── Code inline ── */
+  .code-inline {
+    @apply rounded bg-surface-700 px-1.5 py-0.5 font-mono text-[0.8em] text-brand-300;
+  }
+
+  /* ── Glow effect for active steps ── */
+  .step-glow {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25), 0 0 20px rgba(59, 130, 246, 0.15);
+  }
+
+  /* ── Divider ── */
+  .divider {
+    @apply border-t border-surface-700;
+  }
+}
+
+/* ── Custom animations ─────────────────────────────────────────────────────── */
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes dot-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40%            { transform: scale(1);   opacity: 1; }
+}
+
+.dot-bounce > span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3b82f6;
+  animation: dot-bounce 1.4s infinite ease-in-out both;
+}
+.dot-bounce > span:nth-child(1) { animation-delay: -0.32s; }
+.dot-bounce > span:nth-child(2) { animation-delay: -0.16s; }
+.dot-bounce > span:nth-child(3) { animation-delay: 0s; }
