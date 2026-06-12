@@ -103,6 +103,14 @@ PRICE_TABLE: dict[str, dict[str, float]] = {
     "gemma3:4b":         {"input": 0.0, "output": 0.0},
     "qwen2.5":           {"input": 0.0, "output": 0.0},
     "qwen2.5:7b":        {"input": 0.0, "output": 0.0},
+    # ── Modelos open source especializados en Medicina (Ollama) ───────────────
+    # Entrenados sobre PubMed, guías clínicas y datasets médicos (MedQA, etc.)
+    "meditron":          {"input": 0.0, "output": 0.0},  # EPFL Meditron-7B
+    "meditron:7b":       {"input": 0.0, "output": 0.0},
+    "medllama2":         {"input": 0.0, "output": 0.0},  # Med-LLaMA-2-7B
+    "medllama2:7b":      {"input": 0.0, "output": 0.0},
+    "cniongolo/biomistral": {"input": 0.0, "output": 0.0},  # BioMistral-7B (PubMed Central)
+    "biomistral:7b":       {"input": 0.0, "output": 0.0},  # alias alternativo
 }
 
 # Requisitos orientativos de VRAM para modelos locales (para documentar en TFM)
@@ -114,6 +122,12 @@ HARDWARE_REQUIREMENTS: dict[str, dict] = {
     "deepseek-r1:7b": {"vram_gb": 8,  "ram_gb": 16, "cpu_viable": False},
     "phi4":           {"vram_gb": 12, "ram_gb": 24, "cpu_viable": False},
     "phi4-mini":      {"vram_gb": 4,  "ram_gb": 8,  "cpu_viable": True},
+    "qwen2.5:7b":     {"vram_gb": 8,  "ram_gb": 16, "cpu_viable": False},
+    "gemma3:4b":      {"vram_gb": 4,  "ram_gb": 8,  "cpu_viable": True},
+    # Modelos médicos especializados
+    "meditron:7b":    {"vram_gb": 8,  "ram_gb": 16, "cpu_viable": False},
+    "medllama2:7b":   {"vram_gb": 8,  "ram_gb": 16, "cpu_viable": False},
+    "cniongolo/biomistral": {"vram_gb": 8, "ram_gb": 16, "cpu_viable": False},
 }
 
 

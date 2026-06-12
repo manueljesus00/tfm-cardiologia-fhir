@@ -9,8 +9,8 @@ class AgenteCodificadorCardiologia:
     """
     
     def __init__(self):
-        # Mantenemos gemini-2.5-flash por su excelente balance entre velocidad, coste y razonamiento
-        self.model = genai.GenerativeModel('gemini-2.5-flash')
+        # gemini-3.1-flash-lite: 15 RPM y 500 RPD en free tier
+        self.model = genai.GenerativeModel('gemini-3.1-flash-lite')
 
         self.system_prompt = """
         Eres un Agente Experto en Codificación Clínica, especializado en Cardiología.

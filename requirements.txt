@@ -1,4 +1,5 @@
 google-generativeai>=0.8.0
+markitdown[all]>=0.1.0  # Conversión local de PDF/Word/etc. a Markdown (sin upload a Gemini)
 pandas>=2.0.0
 fhir.resources>=8.2.0
 python-dotenv>=1.0.0

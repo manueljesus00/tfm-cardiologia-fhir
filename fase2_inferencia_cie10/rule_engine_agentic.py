@@ -76,7 +76,7 @@ class AgenteCodificadorAgentico:
 
     def __init__(self):
         self.model = genai.GenerativeModel(
-            model_name="gemini-2.5-flash",
+            model_name="gemini-3.1-flash-lite",
             tools=[Tool(function_declarations=[self._EVALUAR_REGLA_TOOL])],
         )
 
@@ -185,7 +185,7 @@ Procede a evaluar cada grupo de mapeo usando la herramienta disponible.
         el CIE-10 directamente desde el texto clínico.
         """
         # Para inferencia libre no necesitamos Function Calling
-        model_libre = genai.GenerativeModel("gemini-2.5-flash")
+        model_libre = genai.GenerativeModel("gemini-3.1-flash-lite")
         prompt = f"""
 Eres un experto en CIE-10-ES. No hay reglas de mapeo disponibles para este diagnóstico.
 Infiere el código CIE-10-ES más apropiado para el siguiente contexto clínico cardiológico:

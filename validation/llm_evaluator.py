@@ -16,6 +16,8 @@ Uso:
 import os
 import json
 import re
+import time
+import random
 import argparse
 from dataclasses import dataclass, field, asdict
 from typing import Optional
@@ -24,11 +26,15 @@ import config  # type: ignore
 
 
 # ─── Constantes ─────────────────────────────────────────────────────────────
-# Usamos el modelo más capaz disponible como juez independiente
-JUDGE_MODEL = "gemini-2.5-pro"
+# gemini-3.1-flash-lite: 15 RPM y 500 RPD en free tier (vs 5 RPM / 20 RPD de 2.5-flash).
+# Suficiente para evaluación clínica de CIE-10/SNOMED.
+JUDGE_MODEL = "gemini-3.1-flash-lite"
 
 # Umbral de puntuación para considerar un resultado "correcto"
 SCORE_THRESHOLD = 0.7
+
+# Pausa entre llamadas al juez para respetar rate-limit de la API
+JUDGE_SLEEP_S = 2
 
 
 # ─── Schema mínimo FHIR esperado ────────────────────────────────────────────
@@ -192,6 +198,7 @@ def evaluar_archivo_fhir(ruta_fhir: str, diagnostico_original: Optional[str] = N
         vr.juez_score = evaluacion.get("score_global", 0.0)
         vr.juez_veredicto = evaluacion.get("veredicto", "ERROR")
         vr.juez_razonamiento = evaluacion.get("razonamiento", "")
+        time.sleep(JUDGE_SLEEP_S)  # Cambio 4: respetar rate-limit
 
     return vr
 
@@ -234,6 +241,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", default="data/output_fhir/", help="Carpeta con archivos _fhir.json")
     parser.add_argument("--report", default="validation_report.json", help="Ruta del reporte JSON")
+    parser.add_argument(
+        "--sample", type=int, default=None,
+        help="Cambio 4: evaluar solo N archivos aleatorios (muestra para el TFM)",
+    )
     args = parser.parse_args()
 
     archivos_fhir = [
@@ -245,6 +256,12 @@ def main():
     if not archivos_fhir:
         print(f"[!] No se encontraron archivos _fhir.json en '{args.input}'")
         return
+
+    # Cambio 4: submuestreo aleatorio reproducible
+    if args.sample and args.sample < len(archivos_fhir):
+        random.seed(42)
+        archivos_fhir = random.sample(archivos_fhir, args.sample)
+        print(f"[ℹ️] Muestra aleatoria: {args.sample} de los archivos disponibles (seed=42).")
 
     print(f"[ℹ️] Evaluando {len(archivos_fhir)} registros FHIR con juez LLM ({JUDGE_MODEL})...")
     resultados = [evaluar_archivo_fhir(ruta) for ruta in archivos_fhir]

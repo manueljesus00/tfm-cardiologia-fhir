@@ -376,9 +376,13 @@ def obtener_benchmarks():
 
     metricas: list[dict] = []
 
-    # Intentar leer CSV histórico generado por benchmark.py
-    csv_path = _Path("data/benchmark_report.csv")
-    if csv_path.exists():
+    # Intentar leer CSV histórico — generado por benchmark.py o benchmark_multi.py
+    for csv_path in [_Path("data/benchmark_multi_report.csv"), _Path("data/benchmark_report.csv")]:
+     if csv_path.exists():
+      break
+    else:
+      csv_path = None
+    if csv_path and csv_path.exists():
         with open(csv_path, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:

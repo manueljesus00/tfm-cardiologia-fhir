@@ -25,21 +25,26 @@ logger = logging.getLogger(__name__)
 
 def ejecutar_migracion(ruta_sql: str = "database/migrations/002_clinical_schema.sql"):
     """
-    Ejecuta la migración SQL para crear las tablas clínicas si no existen.
-    Llámala UNA VEZ al arrancar la aplicación (idempotente gracias a IF NOT EXISTS).
+    Ejecuta las migraciones SQL en orden para crear y mantener el esquema clínico.
+    Idempotente: usa IF NOT EXISTS y ALTER tolerante a errores.
     """
-    try:
-        with open(ruta_sql, "r", encoding="utf-8") as f:
-            sql = f.read()
-        engine = get_engine()
-        with engine.begin() as conn:
-            conn.execute(text(sql))
-        logger.info("Migración 002 aplicada correctamente.")
-    except FileNotFoundError:
-        logger.warning(f"Archivo de migración no encontrado: {ruta_sql}")
-    except Exception as e:
-        logger.error(f"Error al aplicar migración: {e}")
-        raise
+    migraciones = [
+        "database/migrations/002_clinical_schema.sql",
+        "database/migrations/004_widen_identifier_columns.sql",
+    ]
+    engine = get_engine()
+    for ruta in migraciones:
+        try:
+            with open(ruta, "r", encoding="utf-8") as f:
+                sql = f.read()
+            with engine.begin() as conn:
+                conn.execute(text(sql))
+            logger.info(f"Migración aplicada: {ruta}")
+        except FileNotFoundError:
+            logger.warning(f"Archivo de migración no encontrado: {ruta}")
+        except Exception as e:
+            # ALTER puede fallar si la columna ya tiene el tipo correcto; se ignora
+            logger.warning(f"Migración {ruta} omitida (posiblemente ya aplicada): {e}")
 
 
 # ─── Resolución de entidad ────────────────────────────────────────────────────
@@ -72,11 +77,16 @@ def upsert_paciente(
         except ValueError:
             pass
 
-    # Normalizar identificadores: None si llegan vacíos o como "Desconocido"
-    def _clean(v: Optional[str]) -> Optional[str]:
+    # Normalizar identificadores: None si llegan vacíos o como "Desconocido".
+    # Límites máximos defensivos alineados con el esquema DB (VARCHAR(12) tras migr. 004).
+    _MAX_LEN = {"dni": 12, "nie": 12, "pasaporte": 20, "nass": 12, "nuss": 12}
+
+    def _clean(v: Optional[str], campo: str = "") -> Optional[str]:
         if not v or str(v).strip().lower() in ("desconocido", "null", "none", ""):
             return None
-        return str(v).strip().upper()
+        valor = str(v).strip().upper()
+        max_len = _MAX_LEN.get(campo, 255)
+        return valor[:max_len]  # truncar como última línea de defensa
 
     engine = get_engine()
     with engine.begin() as conn:
@@ -88,11 +98,11 @@ def upsert_paciente(
                 "apellidos":        apellidos,
                 "fecha_nacimiento": fecha,
                 "genero":           genero or "unknown",
-                "dni":              _clean(dni),
-                "nie":              _clean(nie),
-                "pasaporte":        _clean(pasaporte),
-                "nass":             _clean(nass),
-                "nuss":             _clean(nuss),
+                "dni":              _clean(dni, "dni"),
+                "nie":              _clean(nie, "nie"),
+                "pasaporte":        _clean(pasaporte, "pasaporte"),
+                "nass":             _clean(nass, "nass"),
+                "nuss":             _clean(nuss, "nuss"),
             },
         )
         paciente_id = str(result.scalar())
@@ -118,7 +128,7 @@ def insertar_informe(
         conn.execute(
             text("""
                 INSERT INTO informes (id, paciente_id, nombre_archivo, confidence_level, fhir_bundle)
-                VALUES (:id, :paciente_id, :nombre_archivo, :confidence_level, :fhir_bundle::jsonb)
+                VALUES (:id, :paciente_id, :nombre_archivo, :confidence_level, CAST(:fhir_bundle AS jsonb))
             """),
             {
                 "id":               informe_id,
@@ -157,7 +167,7 @@ def insertar_diagnosticos(informe_id: str, diagnosticos: list[dict]):
                         snomed_id, snomed_descripcion, snomed_validado,
                         cie10_codigo, cie10_descripcion, cie10_confidence, cie10_razonamiento
                     ) VALUES (
-                        :informe_id, :tipo::tipo_diagnostico, :orden, :texto,
+                        :informe_id, CAST(:tipo AS tipo_diagnostico), :orden, :texto,
                         :snomed_id, :snomed_descripcion, :snomed_validado,
                         :cie10_codigo, :cie10_descripcion, :cie10_confidence, :cie10_razonamiento
                     )

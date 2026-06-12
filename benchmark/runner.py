@@ -24,6 +24,7 @@ from typing import Optional
 
 from benchmark.providers import ModelProvider
 from benchmark.pricing import calcular_coste_usd, calcular_coste_eur
+from benchmark.llm_logger import LLMLogger
 from fase1_homogeneizacion import AgenteExtractorNER, crear_fhir_base
 from fase2_inferencia_cie10 import extraer_contexto_desde_fhir
 from fase2_inferencia_cie10.rule_engine import AgenteCodificadorCardiologia
@@ -98,18 +99,34 @@ class _TrackingProvider:
     Wrapper sobre ModelProvider que captura usage_metadata en cada llamada.
     Diseñado para inyectarse como self.model en los agentes.
     """
-    def __init__(self, provider: ModelProvider):
+    def __init__(self, provider: ModelProvider, phase_name: str = "?"):
         self._provider = provider
+        self.phase_name = phase_name
         self.prompt_tokens: int = 0
         self.completion_tokens: int = 0
         self.total_tokens: int = 0
 
     def generate_content(self, prompt):
+        t0 = time.perf_counter()
         response = self._provider.generate_content(prompt)
+        latency = round(time.perf_counter() - t0, 3)
         u = response.usage_metadata
-        self.prompt_tokens     += u.prompt_token_count
-        self.completion_tokens += u.candidates_token_count
+        p_tok = u.prompt_token_count
+        c_tok = u.candidates_token_count
+        self.prompt_tokens     += p_tok
+        self.completion_tokens += c_tok
         self.total_tokens      += u.total_token_count
+        # Enviar al monitor en tiempo real
+        prompt_str = prompt if isinstance(prompt, str) else str(prompt)
+        LLMLogger.log_call(
+            model=self._provider.name,
+            phase=self.phase_name,
+            prompt=prompt_str,
+            response=response.text,
+            prompt_tokens=p_tok,
+            completion_tokens=c_tok,
+            latency_s=latency,
+        )
         return response
 
     def reset(self):
@@ -139,8 +156,8 @@ def ejecutar_con_modelo(
     )
 
     # Wrapping del provider para capturar tokens
-    tracker_f1 = _TrackingProvider(provider)
-    tracker_f2 = _TrackingProvider(provider)
+    tracker_f1 = _TrackingProvider(provider, phase_name="Fase 1 — NER")
+    tracker_f2 = _TrackingProvider(provider, phase_name="Fase 2 — CIE-10")
 
     agente_ner = AgenteExtractorNER(mcp_client=None)
     agente_ner.model = tracker_f1  # inyección del tracker

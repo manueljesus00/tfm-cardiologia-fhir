@@ -4,7 +4,36 @@ import os
 import time
 from typing import Optional
 import google.generativeai as genai
+from google.api_core.exceptions import ResourceExhausted
+from markitdown import MarkItDown
 from database.snomed_queries import buscar_concepto_snomed, validar_concepto_snomed
+
+# Instancia global de MarkItDown (conversión local PDF→Markdown, sin upload a LLM)
+_markitdown = MarkItDown()
+
+
+def _generate_with_retry(model, contenido, max_retries: int = 5, base_sleep: float = 20.0):
+    """
+    Llama a model.generate_content con reintentos exponenciales ante errores 429.
+    El free tier de Gemini Flash permite 5 req/min; esperamos hasta que la API
+    indique que podemos reintentar.
+    """
+    for intento in range(max_retries):
+        try:
+            return model.generate_content(contenido)
+        except ResourceExhausted as e:
+            if intento == max_retries - 1:
+                raise
+            # Intentar extraer el tiempo sugerido por la API del mensaje de error
+            msg = str(e)
+            sleep_s = base_sleep
+            match = re.search(r'retry_delay\s*\{\s*seconds:\s*(\d+)', msg)
+            if match:
+                sleep_s = int(match.group(1)) + 2  # +2 s de margen
+            print(f"  [⏳] Rate limit (429). Esperando {sleep_s}s antes del reintento {intento+1}/{max_retries}...")
+            time.sleep(sleep_s)
+        except Exception:
+            raise
 
 class AgenteExtractorNER:
     """
@@ -15,17 +44,24 @@ class AgenteExtractorNER:
         mcp_client: Instancia de MCPSnomedClient. Si se proporciona, todas las
                     búsquedas SNOMED se enrutan a través del protocolo MCP.
                     Si es None, llama directamente a la base de datos (modo legacy).
+        pdf_mode: 'local_md' (default) convierte el PDF localmente con MarkItDown;
+                  'cloud_upload' sube el PDF a la Files API de Gemini para análisis nativo.
     """
-    
-    def __init__(self, mcp_client=None):
+
+    def __init__(self, mcp_client=None, pdf_mode: str = "local_md"):
         self.mcp = mcp_client
-        self.model = genai.GenerativeModel('gemini-2.5-flash')
+        self.pdf_mode = pdf_mode  # Cambio 3: modo dual PDF
+        self.model = genai.GenerativeModel('gemini-3.1-flash-lite')
         
         self.system_prompt = """
         Actúa como un sistema experto de Procesamiento de Lenguaje Natural (PLN) clínico.
         Tu objetivo es leer un documento médico desestructurado y extraer información estructurada.
 
         INSTRUCCIONES:
+
+        0. CLASIFICACIÓN DE DOMINIO:
+           Determina si el documento es principalmente de cardiología (true) o de otra especialidad (false).
+           Un documento es cardiológico si su tema central son enfermedades del corazón o sistema cardiovascular.
 
         1. DATOS DEL PACIENTE:
            - Extrae nombre, apellidos, género biológico (male/female/unknown) y fecha de nacimiento.
@@ -38,10 +74,14 @@ class AgenteExtractorNER:
            - "PRINCIPAL": El diagnóstico que motiva este episodio/informe (solo 1).
            - "SECUNDARIO": Comorbilidades activas que influyen en el tratamiento (puede haber varios).
            - "ANTECEDENTE": Enfermedades pasadas o historia previa relevante (puede haber varios).
-           Para cada diagnóstico, busca su código SNOMED CT (conceptId numérico).
+           Para cada diagnóstico:
+           - Incluye el texto original en español.
+           - Incluye la traducción al inglés biomédico estándar (terminología SNOMED/ICD) en el campo "texto_en".
+           - Busca su código SNOMED CT (conceptId numérico).
 
         Devuelve ÚNICAMENTE un JSON válido con esta estructura exacta, sin markdown:
         {
+          "es_cardiologia": true,
           "paciente": {
             "nombre": "<texto o null>",
             "apellidos": "<texto o null>",
@@ -59,19 +99,22 @@ class AgenteExtractorNER:
             {
               "tipo": "PRINCIPAL",
               "orden": 1,
-              "texto": "<diagnóstico principal>",
+              "texto": "<diagnóstico principal en español>",
+              "texto_en": "<English biomedical term>",
               "snomed_id": "<conceptId numérico o null>"
             },
             {
               "tipo": "SECUNDARIO",
               "orden": 1,
-              "texto": "<diagnóstico secundario>",
+              "texto": "<diagnóstico secundario en español>",
+              "texto_en": "<English biomedical term>",
               "snomed_id": "<conceptId numérico o null>"
             },
             {
               "tipo": "ANTECEDENTE",
               "orden": 1,
-              "texto": "<antecedente>",
+              "texto": "<antecedente en español>",
+              "texto_en": "<English biomedical term>",
               "snomed_id": "<conceptId numérico o null>"
             }
           ]
@@ -136,7 +179,7 @@ Devuelve ÚNICAMENTE un JSON con esta estructura exacta, sin markdown:
 """
         
         try:
-            response = self.model.generate_content(prompt_selector)
+            response = _generate_with_retry(self.model, prompt_selector)
             texto_limpio = re.sub(r'```json|```', '', response.text).strip()
             seleccion = json.loads(texto_limpio)
             
@@ -160,42 +203,56 @@ Devuelve ÚNICAMENTE un JSON con esta estructura exacta, sin markdown:
 
     def extraer_entidades(self, ruta_archivo):
         print(f"[🧠] Agente Extractor analizando el informe: {os.path.basename(ruta_archivo)}")
-        
+
         # 1. Determinamos el tipo de archivo
         _, extension = os.path.splitext(ruta_archivo)
         extension = extension.lower()
 
         # 2. Preparamos el array de contenido que le pasaremos a Gemini
         contenido_a_enviar = [self.system_prompt]
+        _texto_para_clasificar = ""
 
         if extension == '.txt':
             with open(ruta_archivo, 'r', encoding='utf-8') as f:
                 texto = f.read()
+            _texto_para_clasificar = texto
             contenido_a_enviar.append(f"\n\nTEXTO CLÍNICO:\n{texto}")
 
         elif extension == '.pdf':
-            print("  -> Subiendo PDF a Gemini de forma segura...")
-            archivo_pdf = genai.upload_file(ruta_archivo)
-            
-            # Los PDFs necesitan unos segundos para procesarse en los servidores de Google
-            while archivo_pdf.state.name == 'PROCESSING':
-                print('  . procesando documento...', end='\r')
-                time.sleep(2)
-                archivo_pdf = genai.get_file(archivo_pdf.name)
-                
-            print("  -> PDF procesado. Iniciando extracción NER.")
-            contenido_a_enviar.append("\n\nDOCUMENTO CLÍNICO ADJUNTO:")
-            contenido_a_enviar.append(archivo_pdf)
-            
+            # Cambio 3: modo dual PDF
+            if self.pdf_mode == "cloud_upload":
+                print("  -> Subiendo PDF a Gemini Files API (cloud_upload)...")
+                uploaded = genai.upload_file(ruta_archivo, mime_type="application/pdf")
+                contenido_a_enviar = [self.system_prompt, uploaded]
+                _texto_para_clasificar = f"PDF: {os.path.basename(ruta_archivo)}"
+                print(f"  -> PDF subido como {uploaded.name}. Iniciando extracción NER.")
+            else:
+                print("  -> Convirtiendo PDF a Markdown con MarkItDown (local_md)...")
+                resultado = _markitdown.convert(ruta_archivo)
+                texto_md = resultado.text_content
+                if not texto_md or not texto_md.strip():
+                    print("  [⚠️] MarkItDown no extrajo texto (¿PDF escaneado?). Abortando.")
+                    return None
+                print(f"  -> PDF convertido ({len(texto_md)} caracteres). Iniciando extracción NER.")
+                _texto_para_clasificar = texto_md
+                contenido_a_enviar.append(f"\n\nDOCUMENTO CLÍNICO (convertido de PDF):\n{texto_md}")
+
         else:
             print(f"[!] Error: Extensión no soportada ({extension}). Usa .txt o .pdf.")
             return None
 
+        # El filtro de dominio se evalúa dentro de la respuesta JSON del LLM principal (campo es_cardiologia)
+
         # 3. Invocamos al LLM con el contenido (Texto o PDF)
         try:
-            response = self.model.generate_content(contenido_a_enviar)
+            response = _generate_with_retry(self.model, contenido_a_enviar)
             texto_limpio = re.sub(r'```json|```', '', response.text).strip()
             datos = json.loads(texto_limpio)
+
+            # Cambio 1: filtro de dominio cardiológico integrado en la respuesta del LLM
+            if not datos.get('es_cardiologia', True):
+                print(f"  [🚫] Documento fuera del dominio cardiológico (según LLM). Omitiendo.")
+                return {"fuera_de_dominio": True, "archivo": os.path.basename(ruta_archivo)}
 
             # 4. Validamos y corregimos SNOMED CT para CADA diagnóstico de la lista
             diagnosticos = datos.get('diagnosticos', [])
@@ -203,10 +260,14 @@ Devuelve ÚNICAMENTE un JSON con esta estructura exacta, sin markdown:
                 snomed_id = diag.get('snomed_id')
                 texto_diag = diag.get('texto', '')
 
+                # Cambio 5: usar el campo texto_en ya generado por el LLM principal
+                texto_diag_en = diag.get('texto_en') or texto_diag
+                print(f"  [🌐] EN term: '{texto_diag_en[:50]}'")
+
                 if not snomed_id:
-                    # Sin SNOMED sugerido → búsqueda directa
-                    print(f"  [🔍] Sin SNOMED para '{texto_diag[:50]}'. Buscando...")
-                    candidatos = self._buscar_snomed(texto_diag, limite=10)
+                    # Sin SNOMED sugerido → búsqueda directa en edición internacional
+                    print(f"  [🔍] Sin SNOMED para '{texto_diag[:50]}'. Buscando (EN, int)...")
+                    candidatos = self._buscar_snomed(texto_diag_en, edition="int", limite=10)
                     concepto = self.seleccionar_concepto_snomed(texto_diag, candidatos)
                     if concepto:
                         diag['snomed_id'] = concepto['concept_id']
@@ -217,9 +278,9 @@ Devuelve ÚNICAMENTE un JSON con esta estructura exacta, sin markdown:
                         diag['snomed_id'] = None
                         diag['snomed_validado'] = False
                 elif not self._validar_snomed(snomed_id):
-                    # SNOMED sugerido pero inválido → buscar y corregir
-                    print(f"  [⚠️] SNOMED {snomed_id} inválido para '{texto_diag[:50]}'. Corrigiendo...")
-                    candidatos = self._buscar_snomed(texto_diag, limite=10)
+                    # SNOMED sugerido pero inválido → buscar y corregir con texto EN
+                    print(f"  [⚠️] SNOMED {snomed_id} inválido para '{texto_diag[:50]}'. Corrigiendo (EN, int)...")
+                    candidatos = self._buscar_snomed(texto_diag_en, edition="int", limite=10)
                     concepto = self.seleccionar_concepto_snomed(texto_diag, candidatos)
                     if concepto:
                         diag['snomed_id'] = concepto['concept_id']

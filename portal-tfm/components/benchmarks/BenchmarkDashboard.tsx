@@ -98,7 +98,10 @@ export function BenchmarkDashboard() {
 
   useEffect(() => {
     Promise.all([obtenerBenchmarks(), obtenerModelos()])
-      .then(([bm, ml]) => { setData(bm); setModelos(ml); })
+      .then(([bm, ml]) => {
+        setData(Array.isArray(bm) ? bm : []);
+        setModelos(Array.isArray(ml) ? ml : []);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -108,6 +111,18 @@ export function BenchmarkDashboard() {
         <div className="dot-bounce flex gap-2">
           <span /><span /><span />
         </div>
+      </div>
+    );
+  }
+
+  if (data.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 gap-4 text-slate-500">
+        <AlertCircle size={40} className="text-slate-600" />
+        <p className="text-sm">No hay datos de benchmark disponibles.</p>
+        <p className="text-xs text-slate-600">
+          Ejecuta <code className="text-brand-400">python benchmark_multi.py</code> para generar métricas.
+        </p>
       </div>
     );
   }

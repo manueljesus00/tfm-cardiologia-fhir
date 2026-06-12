@@ -109,8 +109,11 @@ def main():
     os.makedirs(input_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=True)
 
-    # 2. Definimos y creamos los directorios si no existen
     # 3. Obtenemos la lista de todos los archivos válidos en la carpeta
+    archivos = sorted([
+        f for f in os.listdir(input_dir)
+        if os.path.splitext(f)[1].lower() in ('.txt', '.pdf')
+    ])
 
     if not archivos:
         print(f"[!] La carpeta '{input_dir}' está vacía.")

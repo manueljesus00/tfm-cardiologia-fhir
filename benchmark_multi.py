@@ -45,6 +45,7 @@ import config  # Carga GOOGLE_API_KEY y otros dotenv
 from benchmark.providers import build_provider, ModelProvider
 from benchmark.runner import ejecutar_con_modelo, imprimir_tabla_comparativa, MultiModelMetrics
 from benchmark.pricing import tabla_precios_markdown
+from benchmark.llm_logger import LLMLogger
 
 
 # ─── Modelos a comparar ───────────────────────────────────────────────────────
@@ -55,26 +56,48 @@ MODELS: list[dict] = [
     # ── Cloud: Google ──────────────────────────────────────────────────────────
     {
         "type":     "gemini",
-        "model_id": "gemini-2.5-flash",
+        "model_id": "gemini-3.1-flash-lite",  # 15 RPM, 500 RPD en free tier
     },
 
     # ── Cloud: OpenAI ─────────────────────────────────────────────────────────
     # Requiere OPENAI_API_KEY en .env
     # {"type": "openai", "model_id": "gpt-4o-mini"},
 
-    # ── Local: Ollama (CPU — 16 GB RAM, sin GPU dedicada) ─────────────────────
-    # Antes de usar: docker compose up ollama -d
-    # Descargar modelo: docker exec -it ollama ollama pull <model_id>
+    # ── Local: Ollama — Modelos de propósito general ──────────────────────────
+    # Requisito previo: ollama serve (servicio nativo Windows en http://localhost:11434)
+    # Descargar: ollama pull <model_id>
     #
     # ✅ RECOMENDADOS para CPU con 16 GB RAM:
-    # {"type": "ollama", "model_id": "phi4-mini"},     # ~4 GB RAM · ~12-15 tok/s · mejor opción
-    # {"type": "ollama", "model_id": "llama3.2:3b"},   # ~3 GB RAM · ~15-20 tok/s · más rápido
-    # {"type": "ollama", "model_id": "gemma3:4b"},     # ~3 GB RAM · ~12-18 tok/s · buena alternativa
+     {"type": "ollama", "model_id": "phi4-mini"},      # ~4 GB RAM · ~12-15 tok/s · mejor calidad/RAM
+     {"type": "ollama", "model_id": "llama3.2:3b"},    # ~3 GB RAM · ~15-20 tok/s · baseline rápido
+     {"type": "ollama", "model_id": "gemma3:4b"},      # ~3 GB RAM · ~12-18 tok/s · alternativa Google
+     {"type": "ollama", "model_id": "qwen2.5:7b"},     # ~5 GB RAM · ~5-8 tok/s  · buen razonamiento
     #
     # ⚠️  VIABLES pero lentos en CPU (varios minutos/informe):
-    # {"type": "ollama", "model_id": "mistral:7b"},    # ~5 GB RAM · ~5-8 tok/s
-    # {"type": "ollama", "model_id": "llama3.1:8b"},   # ~6 GB RAM · ~4-7 tok/s
-    # {"type": "ollama", "model_id": "deepseek-r1:7b"},# ~5 GB RAM · ~4-6 tok/s (muy lento)
+    # {"type": "ollama", "model_id": "mistral:7b"},     # ~5 GB RAM · ~5-8 tok/s
+    # {"type": "ollama", "model_id": "llama3.1:8b"},    # ~6 GB RAM · ~4-7 tok/s
+    # {"type": "ollama", "model_id": "deepseek-r1:7b"}, # ~5 GB RAM · ~4-6 tok/s
+
+    # ── Local: Ollama — Modelos open source especializados en Medicina ─────────
+    # Entrenados sobre literatura biomédica (PubMed, guías clínicas, MedQA).
+    # Permiten evaluar si la especialización médica mejora la codificación CIE-10.
+    #
+    # Descargar:
+    #   ollama pull meditron                  → EPFL Meditron-7B (PubMed + guías clínicas NEJM/Lancet)
+    #   ollama pull medllama2                 → Med-LLaMA-2-7B (MedQA + MedMCQA + HealthCareMagic)
+    #   ollama pull cniongolo/biomistral       → BioMistral-7B (PubMed Central, ~5 GB RAM)
+    #
+     {"type": "ollama", "model_id": "meditron:7b"},              # ~5 GB RAM · EPFL · mejor opción médica
+     {"type": "ollama", "model_id": "medllama2:latest"},              # ~5 GB RAM · medical Q&A fine-tune
+     {"type": "ollama", "model_id": "cniongolo/biomistral:latest"},   # ~5 GB RAM · biomédico general
+
+    # ── Cloud gratuito: Groq (open source, sin coste, ultrarrápido) ───────────
+    # Registro gratuito en https://console.groq.com — sin tarjeta de crédito.
+    # Límite: 14.400 req/día · 500K tokens/día por modelo.
+    # Descargar: solo requiere GROQ_API_KEY en .env
+    #
+     {"type": "groq", "model_id": "llama-3.3-70b-versatile"},  # referencia calidad alta gratis
+     {"type": "groq", "model_id": "llama-3.1-8b-instant"},     # ultrarrápido, baseline ligero
 ]
 
 
@@ -137,12 +160,27 @@ def main():
         action="store_true",
         help="Mostrar tabla de precios de referencia y salir.",
     )
+    parser.add_argument(
+        "--monitor-port",
+        type=int,
+        default=9999,
+        help="Puerto del monitor web de tráfico LLM (default: 9999). 0 para desactivar.",
+    )
+    parser.add_argument(
+        "--no-monitor",
+        action="store_true",
+        help="Desactivar el monitor web de tráfico LLM.",
+    )
     args = parser.parse_args()
 
     if args.precios:
         print("\nTABLA DE PRECIOS LLM (Mayo 2026)\n")
         print(tabla_precios_markdown())
         return
+
+    # ── Monitor de tráfico LLM ────────────────────────────────────────────────
+    if not args.no_monitor:
+        LLMLogger.start(port=args.monitor_port)
 
     # ── Directorios ───────────────────────────────────────────────────────────
     input_dir  = Path("data") / "input_informes"
