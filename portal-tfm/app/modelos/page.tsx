@@ -16,35 +16,54 @@ const MODEL_META: Record<string, {
   url: string;
   strengths: string[];
   badge?: string;
+  warning?: string;
 }> = {
   "gemini-2.5-flash": {
     params: "~30 B",
     context: "1 M tokens",
     license: "Propietario (Google)",
     url: "https://deepmind.google/technologies/gemini/flash/",
-    strengths: ["Velocidad + calidad", "Contexto largo", "Modelo principal del TFM"],
-    badge: "Referencia TFM",
+    strengths: ["Alternativa de mayor capacidad", "Contexto largo (1 M tokens)", "No empleado en el benchmark final"],
+  },
+  "gemini-3.1-flash-lite": {
+    params: "~8 B",
+    context: "1 M tokens",
+    license: "Propietario (Google)",
+    url: "https://deepmind.google/technologies/gemini/flash/",
+    strengths: ["Motor principal del TFM", "100 % éxito en corpus de 27 informes", "Más ligero y económico que 2.5 Flash"],
+    badge: "Motor principal TFM",
   },
   "groq/llama-3.1-8b-instant": {
     params: "8 B",
     context: "128 K tokens",
     license: "Llama 3.1 Community License",
     url: "https://huggingface.co/meta-llama/Meta-Llama-3.1-8B",
-    strengths: ["Inferencia ultrarrápida", "Coste cero (Groq free tier)", "Open source"],
+    strengths: ["Inferencia ultrarrápida (~1 500 tok/s en Groq)", "Coste cero (Groq free tier)", "Open source"],
+    warning: "Falló extracción NER en todos los informes del corpus de benchmark — contexto insuficiente para la tarea.",
   },
   "groq/llama-3.3-70b-versatile": {
     params: "70 B",
     context: "128 K tokens",
     license: "Llama 3.3 Community License",
     url: "https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct",
-    strengths: ["Mayor calidad que 8B", "Open source", "Coste cero (Groq free tier)"],
+    strengths: ["100 % éxito en benchmark (Fase 1 + 2)", "~4-6 s por informe en Groq", "Coste cero (Groq free tier)"],
+    badge: "Open source",
   },
   "ollama/phi4-mini": {
     params: "3.8 B",
     context: "16 K tokens",
     license: "MIT",
     url: "https://huggingface.co/microsoft/Phi-4-mini-instruct",
-    strengths: ["100% local — sin datos al exterior", "CPU-only", "Privacidad total"],
+    strengths: ["100 % local — sin datos al exterior", "Sin GPU requerida", "Privacidad total (RGPD)"],
+    warning: "Timeouts frecuentes en hardware de consumo. Requiere servidor con GPU para rendimiento adecuado.",
+  },
+  "ollama/llama3.2:3b": {
+    params: "3 B",
+    context: "128 K tokens",
+    license: "Llama 3.2 Community License",
+    url: "https://huggingface.co/meta-llama/Llama-3.2-3B",
+    strengths: ["~3 GB RAM", "Baseline rápido en CPU", "100 % local"],
+    warning: "No devolvió entidades en los informes del benchmark. Parámetros insuficientes para NER clínico.",
   },
 };
 
@@ -117,6 +136,12 @@ function ComparisonTable({ models }: { models: ModelInfo[] }) {
                         {s}
                       </li>
                     ))}
+                    {meta?.warning && (
+                      <li className="flex items-start gap-1.5 text-amber-400/80 mt-1">
+                        <span className="mt-0.5 shrink-0 text-amber-500">⚠</span>
+                        {meta.warning}
+                      </li>
+                    )}
                   </ul>
                 </td>
               </tr>
@@ -153,9 +178,11 @@ export default function ModelosPage() {
           Modelos disponibles
         </h1>
         <p className="mx-auto max-w-2xl text-slate-400 text-sm leading-relaxed">
-          El sistema soporta múltiples modelos de lenguaje que pueden procesar los informes cardiológicos.
-          Desde modelos propietarios de alto rendimiento hasta alternativas open-source locales que
-          garantizan privacidad total sin enviar datos al exterior.
+          El sistema soporta múltiples modelos de lenguaje para procesar los informes cardiológicos.
+          Se evaluaron <strong className="text-slate-300">11 modelos</strong> en los benchmarks del TFM:
+          modelos cloud (Gemini, Groq) con rendimiento óptimo y modelos locales vía Ollama
+          que garantizan privacidad total sin enviar datos al exterior, aunque
+          requieren hardware adecuado para tiempos de respuesta aceptables.
         </p>
       </div>
 
@@ -220,8 +247,8 @@ export default function ModelosPage() {
             <span className="text-xs font-semibold uppercase tracking-widest">Rendimiento</span>
           </div>
           <p className="text-xs text-slate-400 leading-relaxed">
-            Gemini 2.5 Flash ofrece la mejor relación velocidad/calidad para extracción NER y codificación CIE-10,
-            con soporte nativo de contexto largo (1 M tokens).
+            Gemini 3.1 Flash Lite es el motor principal empleado en el TFM: 100 % de éxito en el corpus
+            de 27 informes cardiológicos, con latencia media de 14,8 s y contexto de 1 M tokens.
           </p>
         </div>
         <div className="card-sm space-y-2">

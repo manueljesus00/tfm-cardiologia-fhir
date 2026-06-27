@@ -15,21 +15,37 @@ import {
   PolarAngleAxis,
   Radar,
   Cell,
+  ReferenceLine,
 } from "recharts";
 import { obtenerBenchmarks, obtenerModelos } from "@/lib/api";
 import { ModelCard } from "@/components/benchmarks/ModelCard";
 import type { BenchmarkMetric, ModelInfo } from "@/lib/types";
-import { TrendingUp, Clock, Coins, CheckCircle2, AlertCircle } from "lucide-react";
+import { TrendingUp, Clock, Coins, CheckCircle2, AlertCircle, MonitorSmartphone, Info, Tag } from "lucide-react";
 
 // ─── Color palette per model ─────────────────────────────────────────────────
 
 const MODEL_COLORS: Record<string, string> = {
-  "Gemini 2.5 Flash":    "#3b82f6",
-  "GPT-4o (referencia)": "#f59e0b",
+  "Gemini 3.1 Flash Lite":                     "#3b82f6",
+  "Groq/llama-3.3-70b-versatile":              "#f97316",
+  "Groq/llama-3.1-8b-instant":                 "#fb923c",
+  "Ollama/gemma3:4b":                          "#10b981",
+  "Ollama/phi4-mini":                          "#8b5cf6",
+  "Ollama/llama3.2:3b":                        "#a78bfa",
+  "Ollama/qwen2.5:7b":                         "#0d9488",
+  "Ollama/meditron:7b":                        "#e879f9",
+  "Ollama/medllama2:latest":                   "#c084fc",
+  "Ollama/cniongolo/biomistral:latest":        "#6d28d9",
 };
+
+/** Latencia >= este umbral se considera timeout de benchmark */
+const TIMEOUT_S = 119.5;
 
 function modelColor(model: string) {
   return MODEL_COLORS[model] ?? "#94a3b8";
+}
+
+function isTimeout(t: number) {
+  return t >= TIMEOUT_S;
 }
 
 // ─── Tooltip component ───────────────────────────────────────────────────────
@@ -136,13 +152,14 @@ export function BenchmarkDashboard() {
       rows.reduce((s, r) => s + (r[key] as number), 0) / rows.length;
     return {
       modelo,
-      avg_total_s:  +avg("tiempo_total_s").toFixed(2),
-      avg_fase1_s:  +avg("tiempo_fase1_s").toFixed(2),
-      avg_fase2_s:  +avg("tiempo_fase2_s").toFixed(2),
-      avg_tokens:   Math.round(avg("tokens_totales")),
-      avg_coste:    +avg("coste_estimado_eur").toFixed(4),
-      success_rate: +(rows.filter((r) => r.exito).length / rows.length * 100).toFixed(0),
-      runs:         rows.length,
+      avg_total_s:    +avg("tiempo_total_s").toFixed(2),
+      avg_fase1_s:    +avg("tiempo_fase1_s").toFixed(2),
+      avg_fase2_s:    +avg("tiempo_fase2_s").toFixed(2),
+      avg_tokens:     Math.round(avg("tokens_totales")),
+      avg_coste:      +avg("coste_estimado_eur").toFixed(4),
+      success_rate:   +(rows.filter((r) => r.exito).length / rows.length * 100).toFixed(0),
+      f2_success_rate: +(rows.filter((r) => r.cie10_codes && r.cie10_codes.length > 0).length / rows.length * 100).toFixed(0),
+      runs:           rows.length,
     };
   });
 
@@ -180,16 +197,34 @@ export function BenchmarkDashboard() {
     { subject: "Efic. tokens", ...Object.fromEntries(perModel.map((m) => [m.modelo, +(geminiRef ? m.avg_tokens / (geminiRef.avg_tokens || 1) : 1).toFixed(2)])) },
   ];
 
-  // Coste vs fiabilidad: tabla simple (ScatterChart retirado por incompatibilidad recharts v2)
+  // Coste vs fiabilidad: tabla simple
   const costReliabilityRows = perModel.map((m) => ({
-    name: m.modelo.replace(" (referencia)", ""),
-    coste: m.avg_coste,
-    fiabilidad: m.success_rate,
-    latencia: m.avg_total_s,
+    name:           m.modelo.replace(" (referencia)", ""),
+    coste:          m.avg_coste,
+    fiabilidad:     m.success_rate,
+    f2_ok:          m.f2_success_rate,
+    latencia:       m.avg_total_s,
   }));
 
   return (
     <div className="space-y-10 animate-fade-in">
+
+      {/* ── Hardware notice ── */}
+      <div className="flex gap-3 rounded-xl border border-amber-700/50 bg-amber-900/20 p-4 text-sm text-amber-200">
+        <MonitorSmartphone size={18} className="mt-0.5 shrink-0 text-amber-400" />
+        <div className="space-y-1">
+          <p className="font-semibold text-amber-300">
+            Pruebas realizadas en hardware de consumo
+          </p>
+          <p className="text-amber-200/80 text-xs leading-relaxed">
+            Los benchmarks se ejecutaron en un equipo de consumo doméstico (sin GPU dedicada de servidor).
+            Los modelos locales vía Ollama muestran latencias muy elevadas y timeouts frecuentes (120&nbsp;s)
+            en estas condiciones. En un servidor con GPU (p.&nbsp;ej. NVIDIA A100/H100) o en una máquina con
+            mayor RAM y CPU multinúcleo, el rendimiento local sería <strong>significativamente superior</strong>.
+            Los modelos cloud (Gemini, Groq) no se ven afectados por el hardware del ejecutor.
+          </p>
+        </div>
+      </div>
 
       {/* ── Model cards grid ── */}
       <section>
@@ -219,14 +254,14 @@ export function BenchmarkDashboard() {
           icon={Clock}
           label="Latencia media"
           value={`${primary?.avg_total_s ?? "—"} s`}
-          sub="Gemini 2.5 Flash (extremo a extremo)"
+          sub="Gemini 3.1 Flash Lite — motor principal (extremo a extremo)"
           accent="text-brand-400"
         />
         <KpiCard
           icon={Coins}
-          label="Coste por informe"
-          value={`€ ${primary?.avg_coste ?? "—"}`}
-          sub="Estimado con precio público Gemini"
+          label="Coste real (benchmark)"
+          value="€ 0,00"
+          sub="Tier gratuito — estimado a precios Gemini: ~€0,0016/informe"
           accent="text-emerald-400"
         />
         <KpiCard
@@ -248,16 +283,24 @@ export function BenchmarkDashboard() {
       {/* ── Coste vs Fiabilidad: tabla resumen ── */}
       {costReliabilityRows.length > 0 && (
         <div className="card">
-          <h3 className="mb-4 text-sm font-semibold text-slate-200">
-            Coste vs Fiabilidad — resumen por modelo
+          <h3 className="mb-1 text-sm font-semibold text-slate-200">
+            Resumen por modelo
           </h3>
+          <p className="mb-4 text-xs text-slate-400 leading-relaxed">
+            <strong className="text-slate-300">Fiabilidad</strong> = pipeline completo (Fase 1 + Fase 2) con éxito.
+            {" "}<strong className="text-slate-300">CIE-10 F2</strong> = porcentaje de ejecuciones donde la Fase 2 infirió
+            un código CIE-10, aunque Fase 1 hubiera fallado (el FHIR procedía de otro modelo).
+            Los modelos locales con <em>Fase 1 lenta o timeout</em> pueden aún codificar CIE-10 cuando
+            se les provee el FHIR directamente.
+          </p>
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-surface-700 text-slate-500">
                 <th className="pb-2 text-left font-medium">Modelo</th>
                 <th className="pb-2 text-right font-medium">Coste medio</th>
-                <th className="pb-2 text-right font-medium">Fiabilidad</th>
-                <th className="pb-2 text-right font-medium">Latencia</th>
+                <th className="pb-2 text-right font-medium">Fiabilidad pipeline</th>
+                <th className="pb-2 text-right font-medium">CIE-10 Fase 2</th>
+                <th className="pb-2 text-right font-medium">Latencia media</th>
               </tr>
             </thead>
             <tbody>
@@ -267,7 +310,23 @@ export function BenchmarkDashboard() {
                   <td className="py-2 text-right font-mono text-emerald-300">
                     {r.coste > 0 ? `€${r.coste.toFixed(5)}` : "€ 0"}
                   </td>
-                  <td className="py-2 text-right font-mono text-brand-300">{r.fiabilidad}%</td>
+                  <td className="py-2 text-right">
+                    <span className={`font-mono ${
+                      r.fiabilidad === 100 ? "text-emerald-400" :
+                      r.fiabilidad > 0    ? "text-amber-400"   : "text-red-400/70"
+                    }`}>{r.fiabilidad}%</span>
+                  </td>
+                  <td className="py-2 text-right">
+                    <span className={`font-mono ${
+                      r.f2_ok === 100 ? "text-emerald-400" :
+                      r.f2_ok > 0     ? "text-amber-400"   : "text-slate-600"
+                    }`}>
+                      {r.f2_ok}%
+                      {r.f2_ok > 0 && r.fiabilidad < r.f2_ok && (
+                        <span className="ml-1 text-[9px] text-amber-500/80">(F1 falló)</span>
+                      )}
+                    </span>
+                  </td>
                   <td className="py-2 text-right font-mono text-violet-300">{r.latencia}s</td>
                 </tr>
               ))}
@@ -278,46 +337,104 @@ export function BenchmarkDashboard() {
 
       {/* ── Latency stacked bar ── */}
       <div className="card">
-        <h3 className="mb-5 text-sm font-semibold text-slate-200">
+        <h3 className="mb-1 text-sm font-semibold text-slate-200">
           Latencia por Fase — comparativa de modelos (segundos)
         </h3>
-        <ResponsiveContainer width="100%" height={260}>
-          <BarChart data={latencyData} barSize={48}>
+        <p className="mb-4 text-xs text-slate-400 leading-relaxed">
+          Tiempo extremo a extremo dividido en dos fases: <strong className="text-slate-300">Fase 1</strong> (extracción NER + validación SNOMED)
+          y <strong className="text-slate-300">Fase 2</strong> (codificación CIE-10 agéntica). Cada barra es el promedio de
+          todas las ejecuciones del modelo sobre el corpus de 18 informes.
+          La línea roja discontinua marca el umbral de <strong className="text-slate-300">timeout = 120 s</strong>;
+          las barras que lo alcanzan (rojo oscuro) no completaron la Fase 1 en el hardware de prueba.
+        </p>
+        {/* Leyenda manual — fuera del canvas para evitar superposición */}
+        <div className="mb-3 flex flex-wrap gap-4 text-xs text-slate-400">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-3 w-3 rounded-sm bg-[#3b82f6]" />
+            Fase 1 — NER (color por modelo)
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-3 w-3 rounded-sm bg-[#3b82f6bb] opacity-70" />
+            Fase 2 — CIE-10 (más claro)
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-3 w-3 rounded-sm bg-[#7f1d1d]" />
+            Timeout ≥ 120 s
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-2 w-5 border-t-2 border-dashed border-red-500" />
+            Línea de timeout
+          </span>
+        </div>
+        <ResponsiveContainer width="100%" height={320}>
+          <BarChart data={latencyData} barSize={32} margin={{ top: 10, bottom: 80, left: 0, right: 20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-            <XAxis dataKey="name" tick={{ fill: "#94a3b8", fontSize: 12 }} />
+            <XAxis
+              dataKey="name"
+              tick={{ fill: "#94a3b8", fontSize: 10 }}
+              angle={-30}
+              textAnchor="end"
+              interval={0}
+              height={75}
+            />
             <YAxis tick={{ fill: "#94a3b8", fontSize: 11 }} unit=" s" />
             <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Bar dataKey="Fase 1 — NER"    stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]}>
-              {latencyData.map((_, i) => (
-                <Cell key={i} fill={i === 0 ? "#3b82f6" : "#f59e0b"} />
+            <ReferenceLine
+              y={120}
+              stroke="#ef4444"
+              strokeDasharray="6 3"
+              label={{ value: "Timeout 120 s", position: "insideTopRight", fill: "#ef4444", fontSize: 10 }}
+            />
+            <Bar dataKey="Fase 1 — NER" stackId="a" radius={[0, 0, 0, 0]}>
+              {latencyData.map((entry, i) => (
+                <Cell
+                  key={i}
+                  fill={isTimeout((entry["Fase 1 — NER"] as number) + (entry["Fase 2 — CIE-10"] as number))
+                    ? "#7f1d1d"
+                    : modelColor(perModel[i]?.modelo ?? "")}
+                />
               ))}
             </Bar>
-            <Bar dataKey="Fase 2 — CIE-10" stackId="a" fill="#6366f1" radius={[4, 4, 0, 0]}>
-              {latencyData.map((_, i) => (
-                <Cell key={i} fill={i === 0 ? "#6366f1" : "#ef4444"} />
+            <Bar dataKey="Fase 2 — CIE-10" stackId="a" radius={[4, 4, 0, 0]}>
+              {latencyData.map((entry, i) => (
+                <Cell
+                  key={i}
+                  fill={isTimeout((entry["Fase 1 — NER"] as number) + (entry["Fase 2 — CIE-10"] as number))
+                    ? "#991b1b"
+                    : `${modelColor(perModel[i]?.modelo ?? "")}bb`}
+                />
               ))}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
-        <p className="mt-2 text-xs text-slate-600 text-center">
-          Cada barra representa el promedio de {data.length} ejecuciones
+        <p className="mt-2 text-xs text-slate-600">
+          {data.length} ejecuciones registradas · {perModel.filter(m => m.success_rate === 100).length} modelos con 100&nbsp;% éxito ·
+          {" "}{perModel.filter(m => m.avg_total_s >= TIMEOUT_S).length} modelos con timeout sistemático
         </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* ── Token usage ── */}
         <div className="card">
-          <h3 className="mb-5 text-sm font-semibold text-slate-200">
+          <h3 className="mb-1 text-sm font-semibold text-slate-200">
             Consumo de Tokens por Fase
           </h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={tokenData} barSize={40}>
+          <p className="mb-3 text-xs text-slate-400 leading-relaxed">
+            Tokens totales promedio (prompt + respuesta) por modelo.
+            <strong className="text-slate-300"> F1</strong> incluye el texto del informe completo y el prompt de extracción;
+            <strong className="text-slate-300"> F2</strong> incluye el FHIR y las reglas SNOMED→CIE-10.
+            Los modelos que fallaron en Fase 1 no consumen tokens en F2.
+          </p>
+          <div className="mb-2 flex gap-4 text-xs text-slate-400">
+            <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-[#3b82f6]" />Tokens F1</span>
+            <span className="flex items-center gap-1.5"><span className="inline-block h-3 w-3 rounded-sm bg-[#8b5cf6]" />Tokens F2</span>
+          </div>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={tokenData} barSize={36}>
               <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis dataKey="name" tick={{ fill: "#94a3b8", fontSize: 11 }} />
+              <XAxis dataKey="name" tick={{ fill: "#94a3b8", fontSize: 10 }} angle={-20} textAnchor="end" interval={0} height={55} />
               <YAxis tick={{ fill: "#94a3b8", fontSize: 10 }} />
               <Tooltip content={<CustomTooltip />} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
               <Bar dataKey="Tokens F1" stackId="t" fill="#3b82f6" />
               <Bar dataKey="Tokens F2" stackId="t" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
             </BarChart>
@@ -326,9 +443,25 @@ export function BenchmarkDashboard() {
 
         {/* ── Radar comparison ── */}
         <div className="card">
-          <h3 className="mb-5 text-sm font-semibold text-slate-200">
+          <h3 className="mb-1 text-sm font-semibold text-slate-200">
             Análisis Multidimensional (Gemini = referencia 1.0)
           </h3>
+          <p className="mb-3 text-xs text-slate-400 leading-relaxed">
+            Comparativa normalizada en 4 dimensiones: <strong className="text-slate-300">Velocidad</strong> (inverso de latencia),
+            <strong className="text-slate-300"> Bajo coste</strong> (inverso de coste estimado),
+            <strong className="text-slate-300"> Fiabilidad</strong> (% de éxito) y
+            <strong className="text-slate-300"> Efic. tokens</strong> (tokens consumidos relativos).
+            Gemini = 1,0 en todas las dimensiones.
+          </p>
+          {/* Leyenda manual del radar */}
+          <div className="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400">
+            {models.map((m) => (
+              <span key={m} className="flex items-center gap-1.5">
+                <span className="inline-block h-2 w-2 rounded-full" style={{ background: modelColor(m) }} />
+                {m.replace("Ollama/", "").replace("Groq/", "")}
+              </span>
+            ))}
+          </div>
           <ResponsiveContainer width="100%" height={220}>
             <RadarChart data={radarData}>
               <PolarGrid stroke="#334155" />
@@ -344,41 +477,87 @@ export function BenchmarkDashboard() {
                   strokeWidth={2}
                 />
               ))}
-              <Legend wrapperStyle={{ fontSize: 11 }} />
               <Tooltip content={<CustomTooltip />} />
             </RadarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* ── Cost bar ── */}
-      <div className="card">
-        <h3 className="mb-5 text-sm font-semibold text-slate-200">
-          Coste estimado por informe (€) — Gemini vs GPT-4o
-        </h3>
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={costData} layout="vertical" barSize={28}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
-            <XAxis type="number" tick={{ fill: "#94a3b8", fontSize: 11 }} unit=" €" />
-            <YAxis dataKey="name" type="category" width={160} tick={{ fill: "#94a3b8", fontSize: 11 }} />
-            <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="Coste medio (€)" radius={[0, 4, 4, 0]}>
-              {costData.map((entry, i) => (
-                <Cell
-                  key={i}
-                  fill={entry.name.includes("Gemini") ? "#3b82f6" : "#f59e0b"}
-                />
+      {/* ── Cost section ── */}
+      <div className="grid gap-6 lg:grid-cols-2">
+
+        {/* Free-tier reality card */}
+        <div className="card space-y-4">
+          <div className="flex items-center gap-2">
+            <Tag size={14} className="text-emerald-400" />
+            <h3 className="text-sm font-semibold text-slate-200">
+              Coste real del benchmark
+            </h3>
+          </div>
+          <div className="flex items-center gap-3 rounded-lg border border-emerald-800/50 bg-emerald-900/20 px-4 py-3">
+            <CheckCircle2 size={18} className="shrink-0 text-emerald-400" />
+            <div>
+              <p className="text-lg font-bold text-emerald-300">€ 0,00</p>
+              <p className="text-xs text-slate-400">
+                Todos los modelos cloud se ejecutaron en sus <strong>capas gratuitas</strong>:
+                Gemini (Google AI Studio free tier) y Groq (free tier API).
+                Los modelos locales Ollama no tienen coste por token.
+              </p>
+            </div>
+          </div>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            El corpus completo de {data.length} ejecuciones se procesó sin
+            gasto económico real, lo que hace al sistema accesible para
+            investigación y entornos con presupuesto limitado.
+          </p>
+        </div>
+
+        {/* Estimated cost at paid tiers */}
+        <div className="card space-y-4">
+          <div className="flex items-center gap-2">
+            <Info size={14} className="text-brand-400" />
+            <h3 className="text-sm font-semibold text-slate-200">
+              Coste estimado a precios de pago
+            </h3>
+          </div>
+          <p className="text-xs text-slate-500">
+            Estimación basada en el promedio de <strong className="text-slate-300">~3 000 tokens de entrada + 600 de salida</strong> por informe
+            (Fase 1) y <strong className="text-slate-300">~450 + 120</strong> (Fase 2).
+            Conversión USD→EUR a 0,92&nbsp;€/$. Precios de lista junio 2025.
+          </p>
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-surface-700 text-slate-500 text-left">
+                <th className="pb-2 font-medium">Modelo (pago)</th>
+                <th className="pb-2 text-right font-medium">Input $/1M</th>
+                <th className="pb-2 text-right font-medium">Output $/1M</th>
+                <th className="pb-2 text-right font-medium">Est. €/informe</th>
+              </tr>
+            </thead>
+            <tbody className="text-slate-300">
+              {[
+                { name: "Gemini 3.1 Flash Lite",  inp: 0.10,  out: 0.40,  eur: 0.0005 },
+                { name: "Gemini 2.5 Flash (ref.)",  inp: 0.30,  out: 1.25,  eur: 0.0016 },
+                { name: "Claude Sonnet 4",   inp: 3.00,  out: 15.00, eur: 0.0178 },
+                { name: "Groq Llama 3.3 70B (si se factura)", inp: 0.59, out: 0.79, eur: 0.0021 },
+              ].map((r) => (
+                <tr key={r.name} className="border-b border-surface-700/40 last:border-0">
+                  <td className="py-2">{r.name}</td>
+                  <td className="py-2 text-right font-mono text-slate-400">{r.inp.toFixed(2)}</td>
+                  <td className="py-2 text-right font-mono text-slate-400">{r.out.toFixed(2)}</td>
+                  <td className="py-2 text-right font-mono text-emerald-300 font-semibold">
+                    €{r.eur.toFixed(4)}
+                  </td>
+                </tr>
               ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-        <div className="mt-3 flex items-center gap-1.5 text-xs text-emerald-400">
-          <CheckCircle2 size={12} />
-          Gemini 2.5 Flash es{" "}
-          {primary && perModel.length > 1
-            ? `~${Math.round((perModel.find((m) => !m.modelo.includes("Gemini"))?.avg_coste ?? 0) / (primary.avg_coste || 1))}×`
-            : "significativamente"}{" "}
-          más económico por informe procesado.
+            </tbody>
+          </table>
+          <p className="text-[10px] text-slate-600">
+            * Claude Sonnet 4: $3/1M input · $15/1M output (Anthropic, junio 2025).
+            Gemini 3.1 Flash Lite: $0,10/1M input · $0,40/1M output (Google AI, junio 2025).
+            Gemini 2.5 Flash: $0,30/1M input · $1,25/1M output (Google AI, junio 2025).
+            Groq Llama 3.3 70B: $0,59/1M input · $0,79/1M output (Groq on-demand).
+          </p>
         </div>
       </div>
 
@@ -405,7 +584,9 @@ export function BenchmarkDashboard() {
             {data.map((row, i) => (
               <tr
                 key={i}
-                className="border-b border-surface-700/50 text-slate-400 hover:bg-surface-700/30 transition-colors"
+                className={`border-b border-surface-700/50 text-slate-400 hover:bg-surface-700/30 transition-colors ${
+                  isTimeout(row.tiempo_total_s) ? "opacity-60" : ""
+                }`}
               >
                 <td className="py-2 pr-4">
                   <span
@@ -416,9 +597,21 @@ export function BenchmarkDashboard() {
                   </span>
                 </td>
                 <td className="py-2 pr-4 font-mono">{row.archivo}</td>
-                <td className="py-2 pr-4 text-right tabular-nums">{row.tiempo_fase1_s.toFixed(1)}</td>
-                <td className="py-2 pr-4 text-right tabular-nums">{row.tiempo_fase2_s.toFixed(1)}</td>
-                <td className="py-2 pr-4 text-right tabular-nums font-medium text-slate-200">{row.tiempo_total_s.toFixed(1)}</td>
+                <td className="py-2 pr-4 text-right tabular-nums">
+                  {isTimeout(row.tiempo_fase1_s)
+                    ? <span className="text-red-400/70">⏱ {row.tiempo_fase1_s.toFixed(0)}s</span>
+                    : row.tiempo_fase1_s.toFixed(1)}
+                </td>
+                <td className="py-2 pr-4 text-right tabular-nums">
+                  {isTimeout(row.tiempo_fase2_s)
+                    ? <span className="text-red-400/70">⏱ {row.tiempo_fase2_s.toFixed(0)}s</span>
+                    : row.tiempo_fase2_s.toFixed(1)}
+                </td>
+                <td className="py-2 pr-4 text-right tabular-nums font-medium text-slate-200">
+                  {isTimeout(row.tiempo_total_s)
+                    ? <span className="text-red-400 font-semibold">⏱ timeout</span>
+                    : row.tiempo_total_s.toFixed(1)}
+                </td>
                 <td className="py-2 pr-4 text-right tabular-nums">{row.tokens_totales.toLocaleString("es-ES")}</td>
                 <td className="py-2 pr-4 text-right tabular-nums text-emerald-400">
                   {row.coste_estimado_eur?.toFixed(4) ?? "—"}

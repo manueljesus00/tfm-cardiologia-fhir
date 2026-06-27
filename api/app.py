@@ -369,38 +369,125 @@ def _registrar_benchmark(job_id: str, tiempo_total: float):
 def obtener_benchmarks():
     """
     Devuelve métricas históricas de procesamiento para el dashboard del portal.
-    Lee primero el CSV generado por benchmark.py si existe; añade los de sesión.
+    Prioridad:
+      1. benchmark_multi_report.csv (si tiene >= 5 filas)
+      2. Combinación de benchmark_fase1.csv + benchmark_fase2.csv
+      3. benchmark_report.csv (legacy)
+      4. Métricas de sesión en memoria (_benchmark_log)
     """
     import csv
+    import os
+    import re
+    import collections
     from pathlib import Path as _Path
 
-    metricas: list[dict] = []
-
-    # Intentar leer CSV histórico — generado por benchmark.py o benchmark_multi.py
-    for csv_path in [_Path("data/benchmark_multi_report.csv"), _Path("data/benchmark_report.csv")]:
-     if csv_path.exists():
-      break
-    else:
-      csv_path = None
-    if csv_path and csv_path.exists():
-        with open(csv_path, newline="", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                metricas.append({
-                    "modelo": row.get("modelo", "Gemini 2.5 Flash"),
-                    "archivo": row.get("archivo", ""),
-                    "timestamp": row.get("timestamp", ""),
-                    "tiempo_fase1_s": float(row.get("tiempo_fase1_s", 0)),
-                    "tiempo_fase2_s": float(row.get("tiempo_fase2_s", 0)),
-                    "tiempo_total_s": float(row.get("tiempo_total_s", 0)),
+    def _leer_multi_report(path: _Path) -> list[dict]:
+        rows = []
+        with open(path, newline="", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                rows.append({
+                    "modelo":            row.get("modelo", ""),
+                    "archivo":           row.get("archivo", ""),
+                    "timestamp":         row.get("timestamp", ""),
+                    "tiempo_fase1_s":    float(row.get("tiempo_fase1_s", 0)),
+                    "tiempo_fase2_s":    float(row.get("tiempo_fase2_s", 0)),
+                    "tiempo_total_s":    float(row.get("tiempo_total_s", 0)),
                     "tokens_fase1_total": int(row.get("tokens_fase1_total", 0)),
                     "tokens_fase2_total": int(row.get("tokens_fase2_total", 0)),
-                    "tokens_totales": int(row.get("tokens_totales", 0)),
-                    "confidence_level": row.get("confidence_level", ""),
-                    "cie10_codes": row.get("cie10_codes", ""),
-                    "exito": row.get("exito", "True").lower() == "true",
+                    "tokens_totales":    int(row.get("tokens_totales", 0)),
+                    "confidence_level":  row.get("confidence_level", ""),
+                    "cie10_codes":       row.get("cie10_codes", ""),
+                    "exito":             row.get("exito", "True").lower() == "true",
                     "coste_estimado_eur": float(row.get("coste_estimado_eur", 0)),
                 })
+        return rows
+
+    def _combinar_fases() -> list[dict]:
+        """Lee benchmark_fase1.csv + benchmark_fase2.csv y devuelve filas combinadas."""
+        fase1_path = _Path("data/benchmark_fase1.csv")
+        fase2_path = _Path("data/benchmark_fase2.csv")
+        if not fase1_path.exists():
+            return []
+
+        # Leer fase1
+        f1_rows = []
+        with open(fase1_path, newline="", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                f1_rows.append(row)
+
+        # Construir lookup de fase2 indexado por (base_archivo, modelo)
+        f2_lookup: dict = collections.defaultdict(list)
+        if fase2_path.exists():
+            with open(fase2_path, newline="", encoding="utf-8") as f:
+                for row in csv.DictReader(f):
+                    fhir = row.get("archivo", "")
+                    base = fhir.replace("_fhir.json", "")
+                    base = re.sub(
+                        r"_(gemini|llama|gpt|phi4|gemma|qwen|meditron|medllama|biomistral|phi)[^_].*$",
+                        "",
+                        base,
+                        flags=re.IGNORECASE,
+                    )
+                    f2_lookup[(base, row["modelo"])].append(row)
+
+        combined = []
+        for r1 in f1_rows:
+            base = os.path.splitext(r1["archivo"])[0]
+            f2_same = f2_lookup.get((base, r1["modelo"]), [])
+
+            t1   = float(r1.get("tiempo_s", 0))
+            tok1 = int(r1.get("tokens_total", 0))
+            exito1 = r1.get("exito", "False") == "True"
+
+            if f2_same:
+                t2   = sum(float(x["tiempo_s"]) for x in f2_same) / len(f2_same)
+                tok2 = int(sum(int(x["tokens_total"]) for x in f2_same) / len(f2_same))
+                cie10 = ",".join(x["cie10_codes"] for x in f2_same if x.get("cie10_codes"))
+                exito2 = any(x["exito"] == "True" for x in f2_same)
+                exito_final = exito1 and exito2
+            else:
+                t2 = tok2 = 0
+                cie10 = ""
+                exito_final = exito1
+
+            combined.append({
+                "modelo":            r1["modelo"],
+                "archivo":           r1["archivo"],
+                "timestamp":         r1["timestamp"],
+                "tiempo_fase1_s":    round(t1, 3),
+                "tiempo_fase2_s":    round(t2, 3),
+                "tiempo_total_s":    round(t1 + t2, 3),
+                "tokens_fase1_total": tok1,
+                "tokens_fase2_total": tok2,
+                "tokens_totales":    tok1 + tok2,
+                "confidence_level":  r1.get("confidence_level", ""),
+                "cie10_codes":       cie10,
+                "exito":             exito_final,
+                "coste_estimado_eur": float(r1.get("coste_eur", 0)),
+            })
+        return combined
+
+    # ── Prioridad 1: multi report con datos suficientes ──────────────────────
+    metricas: list[dict] = []
+    multi_path = _Path("data/benchmark_multi_report.csv")
+    if multi_path.exists():
+        rows = _leer_multi_report(multi_path)
+        if len(rows) >= 5:
+            metricas.extend(rows)
+            metricas.extend(_benchmark_log)
+            return metricas
+
+    # ── Prioridad 2: combinar fase1 + fase2 ──────────────────────────────────
+    combined = _combinar_fases()
+    if combined:
+        metricas.extend(combined)
+        metricas.extend(_benchmark_log)
+        return metricas
+
+    # ── Prioridad 3: benchmark_report.csv legacy ─────────────────────────────
+    legacy_path = _Path("data/benchmark_report.csv")
+    if legacy_path.exists():
+        metricas.extend(_leer_multi_report(legacy_path))
 
     metricas.extend(_benchmark_log)
     return metricas

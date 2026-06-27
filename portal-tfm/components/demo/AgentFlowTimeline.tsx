@@ -30,7 +30,7 @@ export const AGENT_STEPS: AgentStep[] = [
   {
     id: "ner_llm",
     fase: 1,
-    label: "Agente NER — Gemini 2.5 Flash",
+    label: "Agente NER — Gemini 3.1 Flash Lite",
     detail: "Extracción de paciente y diagnósticos",
     tool: "AgenteExtractorNER.extraer_entidades()",
   },

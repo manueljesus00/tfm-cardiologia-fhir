@@ -20,7 +20,7 @@ const PIPELINE_STEPS = [
   {
     icon: Brain,
     title: "Homogeneización Semántica",
-    desc: "Agente NER con Gemini 2.5 Flash extrae y normaliza entidades clínicas validadas contra SNOMED CT.",
+    desc: "Agente NER multimodelo (Gemini, Groq Llama) extrae y normaliza entidades clínicas validadas contra SNOMED CT.",
     color: "text-brand-400",
     bg: "bg-brand-900/30 border-brand-700/50",
   },
@@ -44,7 +44,7 @@ const STATS = [
   { value: "FHIR R4", label: "Estándar global HL7 International" },
   { value: "SNOMED CT", label: "Ontología clínica universal" },
   { value: "CIE-10-ES", label: "Codificación diagnóstica" },
-  { value: "MCP", label: "Protocolo agéntico de herramientas" },
+  { value: "11 modelos", label: "LLMs evaluados en benchmarks" },
 ];
 
 export default function HomePage() {
@@ -74,10 +74,13 @@ export default function HomePage() {
           </h1>
 
           <p className="max-w-2xl text-lg text-slate-400">
-            Sistema multiagente basado en{" "}
-            <span className="text-slate-200">Gemini 2.5 Flash</span> y el{" "}
+            Sistema multiagente con soporte multi-LLM —{" "}
+            <span className="text-slate-200">Gemini 3.1 Flash Lite</span>,{" "}
+            <span className="text-slate-200">Groq Llama</span> y modelos locales via{" "}
+            <span className="text-slate-200">Ollama</span> — que transforma historiales
+            clínicos heterogéneos usando el{" "}
             <span className="text-slate-200">Model Context Protocol (MCP)</span>{" "}
-            que transforma historiales clínicos heterogéneos en{" "}
+            en{" "}
             <span className="text-slate-200">FHIR R4</span>, el estándar global de{" "}
             <span className="text-slate-200">HL7 International</span>, haciendo
             los datos integrables en cualquier sistema de salud del mundo.
@@ -196,7 +199,7 @@ export default function HomePage() {
               {[
                 {
                   icon: Brain,
-                  text: "Extracción semántica de entidades clínicas mediante NER agéntico: paciente (con identificadores DNI/NUSS), diagnósticos jerárquicos y antecedentes.",
+                  text: "Extracción semántica de entidades clínicas mediante NER agéntico: paciente (con identificadores DNI/NUSS), diagnósticos jerárquicos y antecedentes. Probado con Gemini 3.1 Flash Lite y Groq Llama 3.3 70B.",
                 },
                 {
                   icon: ShieldCheck,

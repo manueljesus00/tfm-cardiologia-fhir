@@ -19,7 +19,7 @@ export default function DemoPage() {
   const [resultado, setResultado]     = useState<ResultadoCompleto | null>(null);
   const [errorMsg, setErrorMsg]       = useState<string | null>(null);
   const [elapsedMs, setElapsedMs]     = useState(0);
-  const [modeloId, setModeloId]       = useState("gemini-2.5-flash");
+  const [modeloId, setModeloId]       = useState("gemini-3.1-flash-lite");
 
   const startTimeRef = useRef<number>(0);
   const timerRef     = useRef<ReturnType<typeof setInterval> | null>(null);

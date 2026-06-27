@@ -25,7 +25,7 @@ const ARCH_LAYERS = [
     color: "border-cyan-700/50 bg-cyan-900/20 text-cyan-300",
     items: [
       "AgenteExtractorNER",
-      "Gemini 2.5 Flash",
+      "Gemini 3.1 Flash Lite / Groq Llama 3.3 70B",
       "MCP Tool: buscar_concepto_snomed",
       "MCP Tool: validar_concepto_snomed",
     ],
@@ -35,7 +35,7 @@ const ARCH_LAYERS = [
     color: "border-emerald-700/50 bg-emerald-900/20 text-emerald-300",
     items: [
       "AgenteCodificadorAgentico",
-      "Gemini Function Calling",
+      "Gemini / Groq / Ollama (gemma3:4b)",
       "Tool: evaluar_regla_mapeo()",
       "FHIR R4 Parser",
     ],
@@ -57,7 +57,7 @@ const ARCH_LAYERS = [
       "mcp_servers/snomed_server.py",
       "mcp_client/snomed_client.py",
       "Stdio transport (subprocess)",
-      "Tools: 3 endpoints SNOMED",
+      "3 tools: buscar / validar / mapeo",
     ],
   },
 ];

@@ -45,7 +45,7 @@ const TIMELINE = [
     title: "Máster Universitario en Ingeniería Informática",
     where: "Universidad Pablo de Olavide",
     tipo: "academic",
-    desc: "TFM: «Homogeneización semántica automatizada de historiales clínicos». Pipeline multiagente con FHIR R4, SNOMED CT y Model Context Protocol sobre Gemini 2.5 Flash.",
+    desc: "TFM: «Homogeneización semántica automatizada de historiales clínicos». Pipeline multiagente con FHIR R4, SNOMED CT y Model Context Protocol. Motor principal: Gemini 3.1 Flash Lite (Google AI Studio free tier), evaluado junto a Groq Llama 3.3 70B y 8 modelos locales Ollama.",
   },
   {
     year: "2020 – 2025",
@@ -163,7 +163,7 @@ export default function AutorPage() {
             </span>{" "}
             de esos ficheros: cualquier historial en texto libre pasa por un
             pipeline multiagente con{" "}
-            <span className="text-slate-200">Gemini 2.5 Flash</span> y{" "}
+            <span className="text-slate-200">Gemini 3.1 Flash Lite</span> y{" "}
             <span className="text-slate-200">
               Model Context Protocol (MCP)
             </span>{" "}
