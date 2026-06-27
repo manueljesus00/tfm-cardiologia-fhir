@@ -1,8 +1,8 @@
-# TFM: Codificación Clínica Automatizada en Cardiología con LLMs y FHIR
+# TFM: Homogeneización semántica automatizada de historiales clínicos
 
 Trabajo de Fin de Máster en Ingeniería Informática. Sistema completo para automatizar la **codificación diagnóstica** de informes cardiológicos: extrae entidades clínicas mediante NER con LLMs, genera recursos **HL7 FHIR R4** y mapea automáticamente a **CIE-10-ES** consultando la IRBD Multibase del Ministerio de Sanidad.
 
-**Portal web:** `https://<usuario>.github.io/tfm-cardiologia-fhir/`
+**Portal web:** `https://manueljesus00.github.io/tfm-cardiologia-fhir/`
 
 ---
 
