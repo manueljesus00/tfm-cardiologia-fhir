@@ -1,0 +1,186 @@
+archivo,modelo,provider,timestamp,tiempo_s,timeout_ocurrido,tokens_prompt,tokens_completion,tokens_total,tokens_por_segundo,coste_usd,coste_eur,coste_por_token_usd,confidence_level,snomed_id,snomed_resuelto,num_entidades_demo,num_diagnosticos_total,num_diagnosticos_principal,num_diagnosticos_secundario,num_diagnosticos_antecedente,fhir_generado,fhir_completitud_pct,fhir_num_recursos,exito,error,ruta_fhir
+A_01_HF_Thomas_Robert.pdf,Gemini 3.1 Flash Lite,google,2026-06-13T21:26:32.110994,13.81,False,2480,585,3065,221.9,0.0,0.0,0.0,high,88805009,True,4,5,1,2,2,True,100.0,6,True,,data\output_fhir\A_01_HF_Thomas_Robert_gemini-3.1-flash-lite_fhir.json
+A_01_HF_Thomas_Robert.pdf,Groq/llama-3.3-70b-versatile,groq,2026-06-13T21:26:45.946611,3.72,False,2972,702,3674,987.6,0.0,0.0,0.0,high,84114007,True,4,5,1,3,1,True,100.0,6,True,,data\output_fhir\A_01_HF_Thomas_Robert_llama-3.3-70b-versatile_fhir.json
+A_01_HF_Thomas_Robert.pdf,Groq/llama-3.1-8b-instant,groq,2026-06-13T21:26:49.685275,1.615,False,1859,698,2557,1583.3,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_01_HF_Thomas_Robert.pdf,Ollama/phi4-mini,ollama,2026-06-13T21:26:51.302316,119.333,False,2775,460,3235,27.1,0.0,0.0,0.0,medium,20401003,True,3,3,1,1,1,False,0.0,0,False,"FHIR build: 1 validation error for CodeableConcept
+text
+  String should match pattern '[ 
+	\S]+' [type=string_pattern_mismatch, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_pattern_mismatch",
+A_01_HF_Thomas_Robert.pdf,Ollama/llama3.2:3b,ollama,2026-06-13T21:28:50.641268,110.536,False,1849,587,2436,22.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_01_HF_Thomas_Robert.pdf,Ollama/gemma3:4b,ollama,2026-06-13T21:34:24.499871,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HF_Thomas_Robert.pdf,Ollama/qwen2.5:7b,ollama,2026-06-13T21:42:43.061984,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HF_Thomas_Robert.pdf,Ollama/meditron:7b,ollama,2026-06-13T21:42:43.071535,114.243,False,2047,7,2054,18.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_01_HF_Thomas_Robert.pdf,Ollama/medllama2:latest,ollama,2026-06-13T21:46:57.672493,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HF_Thomas_Robert.pdf,Ollama/cniongolo/biomistral:latest,ollama,2026-06-13T21:49:20.031230,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HTA_Diaz_Cristina.txt,Gemini 3.1 Flash Lite,google,2026-06-13T21:49:20.053048,25.6,False,2458,682,3140,122.7,0.0,0.0,0.0,high,132721000119104,True,4,6,1,2,3,True,100.0,7,True,,data\output_fhir\A_01_HTA_Diaz_Cristina_gemini-3.1-flash-lite_fhir.json
+A_01_HTA_Diaz_Cristina.txt,Groq/llama-3.3-70b-versatile,groq,2026-06-13T21:49:45.767798,6.462,False,4356,1147,5503,851.6,0.0,0.0,0.0,high,73169008,True,4,4,1,0,3,True,100.0,5,True,,data\output_fhir\A_01_HTA_Diaz_Cristina_llama-3.3-70b-versatile_fhir.json
+A_01_HTA_Diaz_Cristina.txt,Groq/llama-3.1-8b-instant,groq,2026-06-13T21:49:52.254827,3.904,False,1904,2048,3952,1012.3,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_01_HTA_Diaz_Cristina.txt,Ollama/phi4-mini,ollama,2026-06-13T21:57:46.798717,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HTA_Diaz_Cristina.txt,Ollama/llama3.2:3b,ollama,2026-06-13T21:59:52.244312,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HTA_Diaz_Cristina.txt,Ollama/gemma3:4b,ollama,2026-06-13T22:04:43.747749,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HTA_Diaz_Cristina.txt,Ollama/qwen2.5:7b,ollama,2026-06-13T22:12:07.190130,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HTA_Diaz_Cristina.txt,Ollama/meditron:7b,ollama,2026-06-13T22:14:12.775314,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HTA_Diaz_Cristina.txt,Ollama/medllama2:latest,ollama,2026-06-13T22:16:52.397595,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HTA_Diaz_Cristina.txt,Ollama/cniongolo/biomistral:latest,ollama,2026-06-13T22:19:28.210487,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_IAM_Diaz_Antonio.pdf,Gemini 3.1 Flash Lite,google,2026-06-13T22:19:28.223084,5.351,False,3225,515,3740,698.9,0.0,0.0,0.0,high,401303003,True,4,4,1,2,1,True,100.0,5,True,,data\output_fhir\A_01_IAM_Diaz_Antonio_gemini-3.1-flash-lite_fhir.json
+A_01_IAM_Diaz_Antonio.pdf,Groq/llama-3.3-70b-versatile,groq,2026-06-13T22:19:33.644778,1.427,False,2057,407,2464,1726.7,0.0,0.0,0.0,high,22298006,True,4,4,1,0,3,True,100.0,5,True,,data\output_fhir\A_01_IAM_Diaz_Antonio_llama-3.3-70b-versatile_fhir.json
+A_01_IAM_Diaz_Antonio.pdf,Groq/llama-3.1-8b-instant,groq,2026-06-13T22:19:35.093256,2.199,False,2057,1220,3277,1490.2,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_01_IAM_Diaz_Antonio.pdf,Ollama/phi4-mini,ollama,2026-06-13T22:22:58.896054,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_IAM_Diaz_Antonio.pdf,Ollama/llama3.2:3b,ollama,2026-06-13T22:25:58.499490,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_IAM_Diaz_Antonio.pdf,Ollama/gemma3:4b,ollama,2026-06-13T22:29:45.947014,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_IAM_Diaz_Antonio.pdf,Ollama/qwen2.5:7b,ollama,2026-06-13T22:36:28.499395,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_IAM_Diaz_Antonio.pdf,Ollama/meditron:7b,ollama,2026-06-13T22:36:28.514142,117.778,False,2047,7,2054,17.4,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_01_IAM_Diaz_Antonio.pdf,Ollama/medllama2:latest,ollama,2026-06-13T22:41:02.261315,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_IAM_Diaz_Antonio.pdf,Ollama/cniongolo/biomistral:latest,ollama,2026-06-13T22:43:49.890126,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_ARRITMIA_Dominguez_Marta.pdf,Gemini 3.1 Flash Lite,google,2026-06-13T22:43:49.912466,10.811,False,2451,451,2902,268.4,0.0,0.0,0.0,high,401303003,True,4,3,1,1,1,True,100.0,4,True,,data\output_fhir\A_04_ARRITMIA_Dominguez_Marta_gemini-3.1-flash-lite_fhir.json
+A_04_ARRITMIA_Dominguez_Marta.pdf,Groq/llama-3.3-70b-versatile,groq,2026-06-13T22:44:00.804874,4.082,False,2991,608,3599,881.7,0.0,0.0,0.0,high,251150006,True,4,3,1,0,2,True,100.0,4,True,,data\output_fhir\A_04_ARRITMIA_Dominguez_Marta_llama-3.3-70b-versatile_fhir.json
+A_04_ARRITMIA_Dominguez_Marta.pdf,Groq/llama-3.1-8b-instant,groq,2026-06-13T22:44:04.907084,4.318,False,1983,2048,4031,933.5,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_04_ARRITMIA_Dominguez_Marta.pdf,Ollama/phi4-mini,ollama,2026-06-13T22:46:42.132416,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_ARRITMIA_Dominguez_Marta.pdf,Ollama/llama3.2:3b,ollama,2026-06-13T22:46:42.136391,117.003,False,1973,511,2484,21.2,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_04_ARRITMIA_Dominguez_Marta.pdf,Ollama/gemma3:4b,ollama,2026-06-13T22:53:41.484812,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_ARRITMIA_Dominguez_Marta.pdf,Ollama/qwen2.5:7b,ollama,2026-06-13T23:00:31.719456,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_ARRITMIA_Dominguez_Marta.pdf,Ollama/meditron:7b,ollama,2026-06-13T23:30:40.872277,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_ARRITMIA_Dominguez_Marta.pdf,Ollama/medllama2:latest,ollama,2026-06-13T23:33:19.256070,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_ARRITMIA_Dominguez_Marta.pdf,Ollama/cniongolo/biomistral:latest,ollama,2026-06-13T23:36:06.872760,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_HTN_Jackson_Karen.pdf,Gemini 3.1 Flash Lite,google,2026-06-13T23:36:06.887968,11.671,False,3472,715,4187,358.8,0.0,0.0,0.0,high,73169008,True,4,6,1,2,3,True,100.0,7,True,,data\output_fhir\A_04_HTN_Jackson_Karen_gemini-3.1-flash-lite_fhir.json
+A_04_HTN_Jackson_Karen.pdf,Groq/llama-3.3-70b-versatile,groq,2026-06-13T23:36:18.645211,4.457,False,3725,760,4485,1006.3,0.0,0.0,0.0,high,73169008,True,4,4,1,0,3,True,100.0,5,True,,data\output_fhir\A_04_HTN_Jackson_Karen_llama-3.3-70b-versatile_fhir.json
+A_04_HTN_Jackson_Karen.pdf,Groq/llama-3.1-8b-instant,groq,2026-06-13T23:36:23.124609,1.562,False,1771,883,2654,1699.1,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_04_HTN_Jackson_Karen.pdf,Ollama/phi4-mini,ollama,2026-06-13T23:39:26.085730,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_HTN_Jackson_Karen.pdf,Ollama/llama3.2:3b,ollama,2026-06-13T23:41:53.550508,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_HTN_Jackson_Karen.pdf,Ollama/gemma3:4b,ollama,2026-06-13T23:45:24.300497,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HF_Thomas_Robert.pdf,Gemini 3.1 Flash Lite,google,2026-06-14T11:17:21.658228,15.762,False,1888,403,2291,145.3,0.0,0.0,0.0,high,88805009,True,4,4,1,2,1,True,100.0,5,True,,data\output_fhir\A_01_HF_Thomas_Robert_gemini-3.1-flash-lite_fhir.json
+A_01_HF_Thomas_Robert.pdf,Groq/llama-3.3-70b-versatile,groq,2026-06-14T11:17:37.440414,3.262,False,2587,500,3087,946.4,0.0,0.0,0.0,high,424404003,True,4,5,1,3,1,True,100.0,6,True,,data\output_fhir\A_01_HF_Thomas_Robert_llama-3.3-70b-versatile_fhir.json
+A_01_HF_Thomas_Robert.pdf,Groq/llama-3.1-8b-instant,groq,2026-06-14T11:17:40.725154,2.015,False,1859,884,2743,1361.3,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_01_HF_Thomas_Robert.pdf,Ollama/phi4-mini,ollama,2026-06-14T11:20:54.730595,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HF_Thomas_Robert.pdf,Ollama/llama3.2:3b,ollama,2026-06-14T11:24:49.348031,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HF_Thomas_Robert.pdf,Ollama/gemma3:4b,ollama,2026-06-14T11:31:30.779065,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HF_Thomas_Robert.pdf,Ollama/qwen2.5:7b,ollama,2026-06-14T11:41:30.231087,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HF_Thomas_Robert.pdf,Ollama/meditron:7b,ollama,2026-06-14T11:44:14.671560,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HF_Thomas_Robert.pdf,Ollama/medllama2:latest,ollama,2026-06-14T11:47:24.188257,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HF_Thomas_Robert.pdf,Ollama/cniongolo/biomistral:latest,ollama,2026-06-14T11:47:24.199612,113.691,False,2310,57,2367,20.8,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_01_HTA_Diaz_Cristina.txt,Gemini 3.1 Flash Lite,google,2026-06-14T11:49:17.903505,14.697,False,2452,710,3162,215.1,0.0,0.0,0.0,high,38341003,True,4,6,1,2,3,True,100.0,7,True,,data\output_fhir\A_01_HTA_Diaz_Cristina_gemini-3.1-flash-lite_fhir.json
+A_01_HTA_Diaz_Cristina.txt,Groq/llama-3.3-70b-versatile,groq,2026-06-14T11:49:32.686999,6.422,False,3987,952,4939,769.1,0.0,0.0,0.0,high,73169008,True,4,4,1,0,3,True,100.0,5,True,,data\output_fhir\A_01_HTA_Diaz_Cristina_llama-3.3-70b-versatile_fhir.json
+A_01_HTA_Diaz_Cristina.txt,Groq/llama-3.1-8b-instant,groq,2026-06-14T11:49:39.130784,1.935,False,1904,1128,3032,1566.9,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_01_HTA_Diaz_Cristina.txt,Ollama/phi4-mini,ollama,2026-06-14T11:54:20.083660,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HTA_Diaz_Cristina.txt,Ollama/llama3.2:3b,ollama,2026-06-14T11:54:20.086797,85.023,False,1894,475,2369,27.9,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_01_HTA_Diaz_Cristina.txt,Ollama/gemma3:4b,ollama,2026-06-14T11:59:19.705622,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HTA_Diaz_Cristina.txt,Ollama/qwen2.5:7b,ollama,2026-06-14T12:05:15.012704,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HTA_Diaz_Cristina.txt,Ollama/meditron:7b,ollama,2026-06-14T12:05:15.024711,101.825,False,2047,7,2054,20.2,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_01_HTA_Diaz_Cristina.txt,Ollama/medllama2:latest,ollama,2026-06-14T12:10:21.946937,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HTA_Diaz_Cristina.txt,Ollama/cniongolo/biomistral:latest,ollama,2026-06-14T12:12:59.600597,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_IAM_Diaz_Antonio.pdf,Gemini 3.1 Flash Lite,google,2026-06-14T12:12:59.615005,2.647,False,2062,435,2497,943.3,0.0,0.0,0.0,high,54329005,True,4,4,1,2,1,True,100.0,5,True,,data\output_fhir\A_01_IAM_Diaz_Antonio_gemini-3.1-flash-lite_fhir.json
+A_01_IAM_Diaz_Antonio.pdf,Groq/llama-3.3-70b-versatile,groq,2026-06-14T12:13:02.343799,1.382,False,2057,407,2464,1782.9,0.0,0.0,0.0,high,22298006,True,4,4,1,0,3,True,100.0,5,True,,data\output_fhir\A_01_IAM_Diaz_Antonio_llama-3.3-70b-versatile_fhir.json
+A_01_IAM_Diaz_Antonio.pdf,Groq/llama-3.1-8b-instant,groq,2026-06-14T12:13:03.746234,5.655,False,2057,2048,4105,725.9,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_01_IAM_Diaz_Antonio.pdf,Ollama/phi4-mini,ollama,2026-06-14T12:16:28.148563,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_IAM_Diaz_Antonio.pdf,Ollama/llama3.2:3b,ollama,2026-06-14T12:19:02.345539,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_IAM_Diaz_Antonio.pdf,Ollama/gemma3:4b,ollama,2026-06-14T12:22:05.680821,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_IAM_Diaz_Antonio.pdf,Ollama/qwen2.5:7b,ollama,2026-06-14T12:28:56.844007,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_IAM_Diaz_Antonio.pdf,Ollama/meditron:7b,ollama,2026-06-14T12:28:56.859002,113.186,False,2047,7,2054,18.1,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_01_IAM_Diaz_Antonio.pdf,Ollama/medllama2:latest,ollama,2026-06-14T12:34:19.181993,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_IAM_Diaz_Antonio.pdf,Ollama/cniongolo/biomistral:latest,ollama,2026-06-14T12:37:32.713316,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_ARRITMIA_Dominguez_Marta.pdf,Gemini 3.1 Flash Lite,google,2026-06-14T12:37:32.729173,3.154,False,1967,366,2333,739.7,0.0,0.0,0.0,high,49436004,True,4,3,1,1,1,True,100.0,4,True,,data\output_fhir\A_04_ARRITMIA_Dominguez_Marta_gemini-3.1-flash-lite_fhir.json
+A_04_ARRITMIA_Dominguez_Marta.pdf,Groq/llama-3.3-70b-versatile,groq,2026-06-14T12:37:35.950135,4.13,False,2991,625,3616,875.5,0.0,0.0,0.0,high,251150006,True,4,3,1,0,2,True,100.0,4,True,,data\output_fhir\A_04_ARRITMIA_Dominguez_Marta_llama-3.3-70b-versatile_fhir.json
+A_04_ARRITMIA_Dominguez_Marta.pdf,Groq/llama-3.1-8b-instant,groq,2026-06-14T12:37:40.098737,3.255,False,1983,1825,3808,1169.9,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_04_ARRITMIA_Dominguez_Marta.pdf,Ollama/phi4-mini,ollama,2026-06-14T12:40:39.478312,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_ARRITMIA_Dominguez_Marta.pdf,Ollama/llama3.2:3b,ollama,2026-06-14T12:42:46.349901,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_ARRITMIA_Dominguez_Marta.pdf,Ollama/gemma3:4b,ollama,2026-06-14T12:48:10.206411,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_ARRITMIA_Dominguez_Marta.pdf,Ollama/qwen2.5:7b,ollama,2026-06-14T12:54:33.983487,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_ARRITMIA_Dominguez_Marta.pdf,Ollama/meditron:7b,ollama,2026-06-14T13:24:42.517993,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_ARRITMIA_Dominguez_Marta.pdf,Ollama/medllama2:latest,ollama,2026-06-14T13:27:41.215493,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_ARRITMIA_Dominguez_Marta.pdf,Ollama/cniongolo/biomistral:latest,ollama,2026-06-14T13:30:02.097213,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_HTN_Jackson_Karen.pdf,Gemini 3.1 Flash Lite,google,2026-06-14T13:30:02.106547,25.37,False,3472,768,4240,167.1,0.0,0.0,0.0,high,73169008,True,4,6,1,2,3,True,100.0,7,True,,data\output_fhir\A_04_HTN_Jackson_Karen_gemini-3.1-flash-lite_fhir.json
+A_04_HTN_Jackson_Karen.pdf,Groq/llama-3.3-70b-versatile,groq,2026-06-14T13:30:27.544284,4.469,False,3725,778,4503,1007.6,0.0,0.0,0.0,high,73169008,True,4,4,1,0,3,True,100.0,5,True,,data\output_fhir\A_04_HTN_Jackson_Karen_llama-3.3-70b-versatile_fhir.json
+A_04_HTN_Jackson_Karen.pdf,Groq/llama-3.1-8b-instant,groq,2026-06-14T13:30:32.042000,2.126,False,1771,1483,3254,1530.6,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_04_HTN_Jackson_Karen.pdf,Ollama/phi4-mini,ollama,2026-06-14T13:34:24.624224,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_HTN_Jackson_Karen.pdf,Ollama/llama3.2:3b,ollama,2026-06-14T13:37:21.276993,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_HTN_Jackson_Karen.pdf,Ollama/gemma3:4b,ollama,2026-06-14T13:44:43.067579,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_HTN_Jackson_Karen.pdf,Ollama/qwen2.5:7b,ollama,2026-06-14T13:49:04.165348,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_HTN_Jackson_Karen.pdf,Ollama/meditron:7b,ollama,2026-06-14T13:51:13.275068,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_HTN_Jackson_Karen.pdf,Ollama/medllama2:latest,ollama,2026-06-14T13:54:20.262007,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_HTN_Jackson_Karen.pdf,Ollama/cniongolo/biomistral:latest,ollama,2026-06-14T13:56:32.512648,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_IAM_Vazquez_Laura.txt,Gemini 3.1 Flash Lite,google,2026-06-14T13:56:32.515681,17.048,False,3076,475,3551,208.3,0.0,0.0,0.0,high,401303003,True,4,3,1,1,1,True,100.0,4,True,,data\output_fhir\A_04_IAM_Vazquez_Laura_gemini-3.1-flash-lite_fhir.json
+A_04_IAM_Vazquez_Laura.txt,Groq/llama-3.3-70b-versatile,groq,2026-06-14T13:56:49.633778,1.739,False,2636,458,3094,1779.2,0.0,0.0,0.0,high,22298006,True,4,3,1,0,2,True,100.0,4,True,,data\output_fhir\A_04_IAM_Vazquez_Laura_llama-3.3-70b-versatile_fhir.json
+A_04_IAM_Vazquez_Laura.txt,Groq/llama-3.1-8b-instant,groq,2026-06-14T13:56:51.398932,2.539,False,1948,2048,3996,1573.8,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_04_IAM_Vazquez_Laura.txt,Ollama/phi4-mini,ollama,2026-06-14T14:01:07.186065,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_IAM_Vazquez_Laura.txt,Ollama/llama3.2:3b,ollama,2026-06-14T14:04:10.641007,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_IAM_Vazquez_Laura.txt,Ollama/gemma3:4b,ollama,2026-06-14T14:09:15.301253,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_IAM_Vazquez_Laura.txt,Ollama/qwen2.5:7b,ollama,2026-06-14T14:14:28.601063,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_IAM_Vazquez_Laura.txt,Ollama/meditron:7b,ollama,2026-06-14T14:14:28.606008,84.94,False,2047,7,2054,24.2,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_04_IAM_Vazquez_Laura.txt,Ollama/medllama2:latest,ollama,2026-06-14T14:18:43.630240,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_04_IAM_Vazquez_Laura.txt,Ollama/cniongolo/biomistral:latest,ollama,2026-06-14T14:18:43.643730,117.356,False,2413,17,2430,20.7,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_07_IAM_Romero_Ana.txt,Gemini 3.1 Flash Lite,google,2026-06-14T14:20:41.007696,12.932,False,2254,519,2773,214.4,0.0,0.0,0.0,high,54329005,True,4,4,1,1,2,True,100.0,5,True,,data\output_fhir\A_07_IAM_Romero_Ana_gemini-3.1-flash-lite_fhir.json
+A_07_IAM_Romero_Ana.txt,Groq/llama-3.3-70b-versatile,groq,2026-06-14T14:20:54.031225,2.651,False,2429,595,3024,1140.7,0.0,0.0,0.0,high,22298006,True,4,4,1,0,3,True,100.0,5,True,,data\output_fhir\A_07_IAM_Romero_Ana_llama-3.3-70b-versatile_fhir.json
+A_07_IAM_Romero_Ana.txt,Groq/llama-3.1-8b-instant,groq,2026-06-14T14:20:56.701308,1.83,False,1941,978,2919,1595.1,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_07_IAM_Romero_Ana.txt,Ollama/phi4-mini,ollama,2026-06-14T14:23:42.423209,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_07_IAM_Romero_Ana.txt,Ollama/llama3.2:3b,ollama,2026-06-14T14:23:42.429137,105.849,False,1931,484,2415,22.8,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_07_IAM_Romero_Ana.txt,Ollama/gemma3:4b,ollama,2026-06-14T14:30:19.227328,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_07_IAM_Romero_Ana.txt,Ollama/qwen2.5:7b,ollama,2026-06-14T14:37:33.183756,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_07_IAM_Romero_Ana.txt,Ollama/meditron:7b,ollama,2026-06-14T14:39:35.878999,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_07_IAM_Romero_Ana.txt,Ollama/medllama2:latest,ollama,2026-06-14T14:42:31.634943,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_07_IAM_Romero_Ana.txt,Ollama/cniongolo/biomistral:latest,ollama,2026-06-14T14:45:02.129764,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_07_MI_Thompson_Jennifer.pdf,Gemini 3.1 Flash Lite,google,2026-06-14T14:45:02.134946,2.411,False,1876,332,2208,915.8,0.0,0.0,0.0,high,54329005,True,4,3,1,1,1,True,100.0,4,True,,data\output_fhir\A_07_MI_Thompson_Jennifer_gemini-3.1-flash-lite_fhir.json
+A_07_MI_Thompson_Jennifer.pdf,Groq/llama-3.3-70b-versatile,groq,2026-06-14T14:45:04.591661,1.281,False,1836,348,2184,1704.9,0.0,0.0,0.0,high,22298006,True,4,3,1,1,1,True,100.0,4,True,,data\output_fhir\A_07_MI_Thompson_Jennifer_llama-3.3-70b-versatile_fhir.json
+A_07_MI_Thompson_Jennifer.pdf,Groq/llama-3.1-8b-instant,groq,2026-06-14T14:45:05.888872,4.205,False,1836,1786,3622,861.4,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_07_MI_Thompson_Jennifer.pdf,Ollama/phi4-mini,ollama,2026-06-14T14:49:21.364584,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_07_MI_Thompson_Jennifer.pdf,Ollama/llama3.2:3b,ollama,2026-06-14T14:49:21.375705,98.653,False,1826,407,2233,22.6,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_07_MI_Thompson_Jennifer.pdf,Ollama/gemma3:4b,ollama,2026-06-14T14:54:53.634420,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_07_MI_Thompson_Jennifer.pdf,Ollama/qwen2.5:7b,ollama,2026-06-14T15:00:35.209381,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_07_MI_Thompson_Jennifer.pdf,Ollama/meditron:7b,ollama,2026-06-14T15:02:53.982820,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_07_MI_Thompson_Jennifer.pdf,Ollama/medllama2:latest,ollama,2026-06-14T15:06:03.848116,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_07_MI_Thompson_Jennifer.pdf,Ollama/cniongolo/biomistral:latest,ollama,2026-06-14T15:09:03.156023,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_07_VALVULOPATIA_Ruiz_Lucia.pdf,Gemini 3.1 Flash Lite,google,2026-06-14T15:09:03.172820,9.935,False,2017,359,2376,239.2,0.0,0.0,0.0,high,60573004,True,4,3,1,1,1,True,100.0,4,True,,data\output_fhir\A_07_VALVULOPATIA_Ruiz_Lucia_gemini-3.1-flash-lite_fhir.json
+A_07_VALVULOPATIA_Ruiz_Lucia.pdf,Groq/llama-3.3-70b-versatile,groq,2026-06-14T15:09:13.219645,1.285,False,2017,316,2333,1815.6,0.0,0.0,0.0,high,236599009,True,4,3,1,0,2,True,100.0,4,True,,data\output_fhir\A_07_VALVULOPATIA_Ruiz_Lucia_llama-3.3-70b-versatile_fhir.json
+A_07_VALVULOPATIA_Ruiz_Lucia.pdf,Groq/llama-3.1-8b-instant,groq,2026-06-14T15:09:14.523566,2.242,False,2017,1377,3394,1513.8,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_07_VALVULOPATIA_Ruiz_Lucia.pdf,Ollama/phi4-mini,ollama,2026-06-14T15:12:43.364816,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_07_VALVULOPATIA_Ruiz_Lucia.pdf,Ollama/llama3.2:3b,ollama,2026-06-14T15:15:04.521218,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_07_VALVULOPATIA_Ruiz_Lucia.pdf,Ollama/gemma3:4b,ollama,2026-06-14T15:19:07.356720,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_07_VALVULOPATIA_Ruiz_Lucia.pdf,Ollama/qwen2.5:7b,ollama,2026-06-14T15:24:52.106219,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_07_VALVULOPATIA_Ruiz_Lucia.pdf,Ollama/meditron:7b,ollama,2026-06-14T15:26:53.503907,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_07_VALVULOPATIA_Ruiz_Lucia.pdf,Ollama/medllama2:latest,ollama,2026-06-14T15:30:35.645509,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_07_VALVULOPATIA_Ruiz_Lucia.pdf,Ollama/cniongolo/biomistral:latest,ollama,2026-06-14T15:34:06.051226,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_10_VALVE_Smith_David.pdf,Gemini 3.1 Flash Lite,google,2026-06-14T15:34:06.062835,6.668,False,1829,408,2237,335.5,0.0,0.0,0.0,high,60573004,True,4,4,1,1,2,True,100.0,5,True,,data\output_fhir\A_10_VALVE_Smith_David_gemini-3.1-flash-lite_fhir.json
+A_10_VALVE_Smith_David.pdf,Groq/llama-3.3-70b-versatile,groq,2026-06-14T15:34:12.794779,4.11,False,2843,654,3497,850.9,0.0,0.0,0.0,high,234059001,True,4,4,1,1,2,True,100.0,5,True,,data\output_fhir\A_10_VALVE_Smith_David_llama-3.3-70b-versatile_fhir.json
+A_10_VALVE_Smith_David.pdf,Groq/llama-3.1-8b-instant,groq,2026-06-14T15:34:16.934085,2.434,False,1795,2048,3843,1578.9,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_10_VALVE_Smith_David.pdf,Ollama/phi4-mini,ollama,2026-06-14T15:38:12.114789,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_10_VALVE_Smith_David.pdf,Ollama/llama3.2:3b,ollama,2026-06-14T15:40:28.892124,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_10_VALVE_Smith_David.pdf,Ollama/gemma3:4b,ollama,2026-06-14T15:43:43.479544,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_10_VALVE_Smith_David.pdf,Ollama/qwen2.5:7b,ollama,2026-06-14T15:50:07.775804,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_10_VALVE_Smith_David.pdf,Ollama/meditron:7b,ollama,2026-06-14T15:50:07.789683,100.831,False,2047,7,2054,20.4,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_10_VALVE_Smith_David.pdf,Ollama/medllama2:latest,ollama,2026-06-14T15:54:02.616012,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_10_VALVE_Smith_David.pdf,Ollama/cniongolo/biomistral:latest,ollama,2026-06-14T16:06:10.159593,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_10_VALVULOPATIA_Martinez_Manuel.txt,Gemini 3.1 Flash Lite,google,2026-06-14T16:06:10.170091,2.096,False,1838,362,2200,1049.6,0.0,0.0,0.0,high,60573004,True,4,3,1,1,1,True,100.0,4,True,,data\output_fhir\A_10_VALVULOPATIA_Martinez_Manuel_gemini-3.1-flash-lite_fhir.json
+A_10_VALVULOPATIA_Martinez_Manuel.txt,Groq/llama-3.3-70b-versatile,groq,2026-06-14T16:06:12.306121,4.857,False,3261,747,4008,825.2,0.0,0.0,0.0,high,234059001,True,4,3,1,0,2,True,100.0,4,True,,data\output_fhir\A_10_VALVULOPATIA_Martinez_Manuel_llama-3.3-70b-versatile_fhir.json
+A_10_VALVULOPATIA_Martinez_Manuel.txt,Groq/llama-3.1-8b-instant,groq,2026-06-14T16:06:17.177336,1.307,False,1881,898,2779,2126.2,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_10_VALVULOPATIA_Martinez_Manuel.txt,Ollama/phi4-mini,ollama,2026-06-14T16:09:18.053649,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_10_VALVULOPATIA_Martinez_Manuel.txt,Ollama/llama3.2:3b,ollama,2026-06-14T16:12:36.729325,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_10_VALVULOPATIA_Martinez_Manuel.txt,Ollama/gemma3:4b,ollama,2026-06-14T16:16:37.193242,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_10_VALVULOPATIA_Martinez_Manuel.txt,Ollama/qwen2.5:7b,ollama,2026-06-14T16:22:09.999729,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_10_VALVULOPATIA_Martinez_Manuel.txt,Ollama/meditron:7b,ollama,2026-06-14T16:22:10.008505,99.641,False,2047,7,2054,20.6,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_10_VALVULOPATIA_Martinez_Manuel.txt,Ollama/medllama2:latest,ollama,2026-06-14T16:26:20.055279,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_10_VALVULOPATIA_Martinez_Manuel.txt,Ollama/cniongolo/biomistral:latest,ollama,2026-06-14T16:28:36.429749,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_10_VALVULOPATIA_Ramos_Manuel.pdf,Gemini 3.1 Flash Lite,google,2026-06-14T16:28:36.439556,4.31,False,1979,444,2423,562.2,0.0,0.0,0.0,high,60573004,True,4,4,1,2,1,True,100.0,5,True,,data\output_fhir\A_10_VALVULOPATIA_Ramos_Manuel_gemini-3.1-flash-lite_fhir.json
+A_10_VALVULOPATIA_Ramos_Manuel.pdf,Groq/llama-3.3-70b-versatile,groq,2026-06-14T16:28:40.822892,3.287,False,2860,596,3456,1051.4,0.0,0.0,0.0,high,234059001,True,4,3,1,0,2,True,100.0,4,True,,data\output_fhir\A_10_VALVULOPATIA_Ramos_Manuel_llama-3.3-70b-versatile_fhir.json
+A_10_VALVULOPATIA_Ramos_Manuel.pdf,Groq/llama-3.1-8b-instant,groq,2026-06-14T16:28:44.127049,4.167,False,1978,2040,4018,964.2,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_10_VALVULOPATIA_Ramos_Manuel.pdf,Ollama/phi4-mini,ollama,2026-06-14T16:31:26.311463,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_10_VALVULOPATIA_Ramos_Manuel.pdf,Ollama/llama3.2:3b,ollama,2026-06-14T16:33:37.297456,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_10_VALVULOPATIA_Ramos_Manuel.pdf,Ollama/gemma3:4b,ollama,2026-06-14T16:36:56.517291,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_10_VALVULOPATIA_Ramos_Manuel.pdf,Ollama/qwen2.5:7b,ollama,2026-06-14T16:43:04.926725,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_10_VALVULOPATIA_Ramos_Manuel.pdf,Ollama/meditron:7b,ollama,2026-06-14T16:43:04.942679,100.37,False,2047,7,2054,20.5,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_10_VALVULOPATIA_Ramos_Manuel.pdf,Ollama/medllama2:latest,ollama,2026-06-14T16:47:28.009752,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_10_VALVULOPATIA_Ramos_Manuel.pdf,Ollama/cniongolo/biomistral:latest,ollama,2026-06-14T16:50:32.659202,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_13_ARRITMIA_Ramos_Jose.txt,Gemini 3.1 Flash Lite,google,2026-06-14T16:50:32.678116,15.751,False,2297,552,2849,180.9,0.0,0.0,0.0,high,49436004,True,4,3,1,1,1,True,100.0,4,True,,data\output_fhir\A_13_ARRITMIA_Ramos_Jose_gemini-3.1-flash-lite_fhir.json
+A_13_ARRITMIA_Ramos_Jose.txt,Groq/llama-3.3-70b-versatile,groq,2026-06-14T16:50:48.504742,6.941,False,3643,922,4565,657.7,0.0,0.0,0.0,high,251150006,True,4,4,1,0,3,True,100.0,5,True,,data\output_fhir\A_13_ARRITMIA_Ramos_Jose_llama-3.3-70b-versatile_fhir.json
+A_13_ARRITMIA_Ramos_Jose.txt,Groq/llama-3.1-8b-instant,groq,2026-06-14T16:50:55.493502,1.821,False,1875,1150,3025,1661.2,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Fase1: el modelo no devolvió entidades,
+A_13_ARRITMIA_Ramos_Jose.txt,Ollama/phi4-mini,ollama,2026-06-14T16:54:12.997642,120.0,True,0,0,0,0.0,0.0,0.0,0.0,,,False,0,0,0,0,0,False,0.0,0,False,Timeout tras 120.0s,
+A_01_HF_Thomas_Robert.pdf,Ollama/gemma3:4b,ollama,2026-06-14T22:52:45.821052,187.922,False,3930,909,4839,25.8,0.0,0.0,0.0,high,84114007,True,4,4,1,2,1,True,100.0,5,True,,data\output_fhir\A_01_HF_Thomas_Robert_gemma3_4b_fhir.json
+A_01_HF_Thomas_Robert.pdf,Ollama/gemma3:4b,ollama,2026-06-14T22:57:06.978753,176.651,False,4546,1074,5620,31.8,0.0,0.0,0.0,high,84114007,True,4,5,1,2,2,True,100.0,6,True,,data\output_fhir\A_01_HF_Thomas_Robert_gemma3_4b_fhir.json
+A_01_HTA_Diaz_Cristina.txt,Ollama/gemma3:4b,ollama,2026-06-14T23:00:03.674076,151.253,False,4274,995,5269,34.8,0.0,0.0,0.0,high,2447002,True,4,4,1,2,1,True,100.0,5,True,,data\output_fhir\A_01_HTA_Diaz_Cristina_gemma3_4b_fhir.json
+A_01_IAM_Diaz_Antonio.pdf,Ollama/gemma3:4b,ollama,2026-06-14T23:02:34.960410,175.111,False,4517,816,5333,30.5,0.0,0.0,0.0,high,103720008,True,4,4,1,2,1,True,100.0,5,True,,data\output_fhir\A_01_IAM_Diaz_Antonio_gemma3_4b_fhir.json
+A_04_ARRITMIA_Dominguez_Marta.pdf,Ollama/gemma3:4b,ollama,2026-06-14T23:05:30.092812,226.508,False,4999,1151,6150,27.2,0.0,0.0,0.0,high,20401003,True,4,5,1,1,3,True,100.0,6,True,,data\output_fhir\A_04_ARRITMIA_Dominguez_Marta_gemma3_4b_fhir.json
+A_04_HTN_Jackson_Karen.pdf,Ollama/gemma3:4b,ollama,2026-06-14T23:09:16.644208,242.41,False,3649,870,4519,18.6,0.0,0.0,0.0,high,73169008,True,4,5,1,1,3,True,100.0,6,True,,data\output_fhir\A_04_HTN_Jackson_Karen_gemma3_4b_fhir.json
+A_04_IAM_Vazquez_Laura.txt,Ollama/gemma3:4b,ollama,2026-06-14T23:13:19.086986,130.66,False,4136,778,4914,37.6,0.0,0.0,0.0,high,20401003,True,4,3,1,1,1,True,100.0,4,True,,data\output_fhir\A_04_IAM_Vazquez_Laura_gemma3_4b_fhir.json
+A_07_IAM_Romero_Ana.txt,Ollama/gemma3:4b,ollama,2026-06-14T23:15:29.801989,272.252,False,6341,1388,7729,28.4,0.0,0.0,0.0,high,20401003,True,4,6,1,3,2,True,100.0,7,True,,data\output_fhir\A_07_IAM_Romero_Ana_gemma3_4b_fhir.json
+A_07_MI_Thompson_Jennifer.pdf,Ollama/gemma3:4b,ollama,2026-06-14T23:20:02.115971,134.208,False,3590,744,4334,32.3,0.0,0.0,0.0,high,703213009,True,4,3,1,1,1,True,100.0,4,True,,data\output_fhir\A_07_MI_Thompson_Jennifer_gemma3_4b_fhir.json
+A_07_VALVULOPATIA_Ruiz_Lucia.pdf,Ollama/gemma3:4b,ollama,2026-06-14T23:22:16.368148,158.917,False,3845,746,4591,28.9,0.0,0.0,0.0,high,76948002,True,4,3,1,1,1,True,100.0,4,True,,data\output_fhir\A_07_VALVULOPATIA_Ruiz_Lucia_gemma3_4b_fhir.json
+A_10_VALVE_Smith_David.pdf,Ollama/gemma3:4b,ollama,2026-06-14T23:24:55.326537,169.782,False,3927,1032,4959,29.2,0.0,0.0,0.0,high,82184000,True,4,4,1,1,2,True,100.0,5,True,,data\output_fhir\A_10_VALVE_Smith_David_gemma3_4b_fhir.json
