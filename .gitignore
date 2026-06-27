@@ -1,0 +1,54 @@
+.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+venv/
+.venv/
+
+# Base de datos
+*.sql
+*.dump
+*.backup
+postgres_data/
+snomed_data/
+data/backups/
+
+# Datos clínicos (no subir al repo — privacidad del paciente)
+data/input_informes/
+data/output_fhir/
+
+# Benchmark reports
+benchmark_report.csv
+validation_report.json
+
+# VS Code workspace
+*.code-workspace
+
+# Node.js
+node_modules/
+portal-tfm/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Next.js
+portal-tfm/.next/
+portal-tfm/out/
+
+# Frontend environment
+portal-tfm/.env
+portal-tfm/.env.local
+portal-tfm/.env.development.local
+portal-tfm/.env.test.local
+portal-tfm/.env.production.local
+
+# Cache
+.cache/
+*.tsbuildinfo
+.eslintcache

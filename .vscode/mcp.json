@@ -1,0 +1,26 @@
+{
+  "_comentario": "Este archivo es OPCIONAL. Solo sirve para que VS Code Copilot Chat pueda usar las tools SNOMED en el chat interactivo. La aplicación (main.py / uvicorn) lanza su propio servidor MCP sin necesitar este archivo.",
+  "servers": {
+    "snomed-irbd": {
+      "type": "stdio",
+      "command": "c:/Users/manue/Documents/TFM/tfm-cardiologia-fhir/venv/Scripts/python.exe",
+      "args": [
+        "mcp_servers/snomed_server.py",
+        "--transport",
+        "stdio"
+      ],
+      "cwd": "c:/Users/manue/Documents/TFM/tfm-cardiologia-fhir",
+      "env": {}
+    },
+    "postgres-irbd": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://postgres:snomed_password@localhost:5432/snomed_irbd"
+      ],
+      "env": {}
+    }
+  }
+}

@@ -1,0 +1,2 @@
+archivo,modelo,provider,timestamp,tiempo_fase1_s,tokens_fase1_prompt,tokens_fase1_completion,tokens_fase1_total,tiempo_fase2_s,tokens_fase2_prompt,tokens_fase2_completion,tokens_fase2_total,tiempo_total_s,tokens_totales,coste_usd,coste_eur,confidence_level,snomed_id,cie10_codes,exito,error
+S0004-06142005000500011-1.txt,Gemini 3.1 Flash Lite,google,2026-06-11T21:47:18.651835,2.338,1294,615,1909,0.0,0,0,0,0.0,0,0.0,0.0,minimal,,,False,Confianza insuficiente (minimal)

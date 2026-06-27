@@ -1,0 +1,17 @@
+google-generativeai>=0.8.0
+markitdown[all]>=0.1.0  # Conversión local de PDF/Word/etc. a Markdown (sin upload a Gemini)
+pandas>=2.0.0
+fhir.resources>=8.2.0
+python-dotenv>=1.0.0
+SQLAlchemy>=2.0.0
+psycopg2-binary>=2.9.0
+mcp>=1.2.0
+chromadb>=0.5.0
+pydantic>=2.0.0
+# API
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9
+# Benchmark multi-modelo
+openai>=1.30.0          # OpenAI GPT-4o + adaptador para Ollama (API compatible)
+anthropic>=0.25.0       # Claude 3.x
