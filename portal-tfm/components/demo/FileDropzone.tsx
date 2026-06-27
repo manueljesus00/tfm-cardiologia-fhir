@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useDropzone } from "react-dropzone";
+import { useDropzone, FileRejection } from "react-dropzone";
 import { Upload, FileText, X, AlertCircle } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -21,7 +21,7 @@ export function FileDropzone({ onFile, disabled }: FileDropzoneProps) {
   const [selected, setSelected] = useState<File | null>(null);
 
   const onDrop = useCallback(
-    (accepted: File[], rejected: { file: File; errors: { message: string }[] }[]) => {
+    (accepted: File[], rejected: FileRejection[]) => {
       setError(null);
       if (rejected.length > 0) {
         const msg = rejected[0].errors[0]?.message ?? "Archivo no válido";

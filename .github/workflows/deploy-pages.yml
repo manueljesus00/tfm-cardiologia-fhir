@@ -1,0 +1,62 @@
+name: Deploy portal to GitHub Pages
+
+on:
+  push:
+    branches: [main]       # Cambia a "master" si ese es tu rama principal
+    paths:
+      - "portal-tfm/**"    # Solo se dispara cuando cambia el portal
+      - ".github/workflows/deploy-pages.yml"
+  workflow_dispatch:        # Permite lanzarlo manualmente desde GitHub
+
+# Permisos necesarios para publicar en GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Evita despliegues simultáneos; si se pushea dos veces seguidas, cancela el anterior
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # ─── 1. Build estático ───────────────────────────────────────────────────────
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: portal-tfm/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: portal-tfm
+
+      - name: Build (static export)
+        run: npm run build
+        working-directory: portal-tfm
+        # GITHUB_ACTIONS=true  →  next.config.mjs activa output:"export" y basePath
+        # No se necesitan claves de API: el frontend usa datos mock cuando no hay backend
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: portal-tfm/out   # Directorio que genera "output: export"
+
+  # ─── 2. Deploy ───────────────────────────────────────────────────────────────
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
